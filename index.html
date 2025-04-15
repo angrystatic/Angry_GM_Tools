@@ -437,11 +437,3 @@
 </body>
 </html>
 ```
-
-**Summary of Changes:**
-
-1.  **Removed Data Duplication:** The `coreZones` and `optionalZones` variables are now defined only once.
-2.  **Robust Startup:** Added `try...catch` around the initial DOM element fetching and the `window.onload` function call to catch errors that might occur right at the start. Checks are included to ensure essential elements exist.
-3.  **Removed Export Code:** All traces of the `exportButton` and the `exportSVG` function have been removed.
-
-This version *should* now work correctly. Please try generating a map again and let me know if it functions as expected. Remember to check the console (F12) if you encounter any further issu
