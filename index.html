@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alien RPG Map Generator Prototype v4 (Data Fix)</title> <style>
-        /* --- Basic Body & Control Styles --- */
+    <title>Angry Static's Map Generator (FINAL Data Fix)</title> <style>
+        /* Basic styling */
         body {
             font-family: 'Consolas', 'Courier New', monospace;
             background-color: #1a1a1a;
@@ -13,17 +13,15 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            min-height: 100vh;
-            box-sizing: border-box;
         }
         h1 {
             color: #4CAF50;
             text-shadow: 0 0 5px #4CAF50;
-            margin-top: 0;
             text-align: center;
         }
+        /* Controls styling */
         .controls {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             background-color: #2a2a2a;
             padding: 15px;
             border-radius: 5px;
@@ -37,25 +35,23 @@
         .controls > div { display: flex; align-items: center; gap: 5px; }
         label { color: #a0a0a0; white-space: nowrap; }
         select, button { padding: 8px 12px; background-color: #333; color: #c0c0c0; border: 1px solid #555; border-radius: 3px; font-family: inherit; cursor: pointer; }
-        button:hover { background-color: #444; border-color: #777; }
+        button:hover { background-color: #444; }
 
-        /* --- Map Container --- */
+        /* Map area */
         #map-container {
-            width: 85%;
-            max-width: 1000px;
-            min-height: 600px;
+            width: 90%; /* Wider to accommodate layout */
+            max-width: 800px;
+            min-height: 600px; /* Taller */
             background-color: #0a0f0a;
             border: 2px solid #3a5a3a;
-            position: relative; /* Crucial for positioning children */
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 15px;
+            position: relative;
             margin-top: 20px;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+            overflow-x: auto; /* Keep horizontal scroll */
+            overflow-y: hidden; /* Hide vertical scroll */
+            padding-bottom: 15px; /* Space for scrollbar */
             box-sizing: border-box;
         }
-
-        /* --- SVG Overlay for Connectors --- */
+        /* SVG Overlay */
         #connector-svg {
             position: absolute;
             top: 0;
@@ -64,23 +60,12 @@
             z-index: 1;
             pointer-events: none;
         }
+        /* Connector Line Styles */
+        .connector-line { stroke-linecap: round; }
+        .connector-corridor { stroke: rgba(76, 175, 80, 0.6); stroke-width: 4px; }
+        .connector-vent { stroke: rgba(100, 100, 150, 0.7); stroke-width: 2px; stroke-dasharray: 5, 5; }
 
-        /* --- Connector Line Styles --- */
-        .connector-line {
-            stroke-linecap: round;
-        }
-        .connector-corridor {
-            stroke: rgba(76, 175, 80, 0.6); /* Greenish corridor */
-            stroke-width: 4px;
-        }
-        .connector-vent {
-            stroke: rgba(100, 100, 150, 0.7); /* Bluish vent */
-            stroke-width: 2px;
-            stroke-dasharray: 5, 5; /* Dashed line for vents */
-        }
-
-
-        /* --- Zone Styling --- */
+        /* Zone styling */
         .zone {
             position: absolute;
             background-color: rgba(50, 70, 50, 0.7);
@@ -88,26 +73,35 @@
             color: #e0e0e0;
             padding: 10px;
             text-align: center;
-            width: 120px;
-            min-height: 50px;
-            height: auto;
+            width: 100px;
+            height: 50px;
             border-radius: 3px;
-            font-size: 0.85em;
+            font-size: 0.8em;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
-            transition: all 0.5s ease-out;
             box-sizing: border-box;
             transform: translate(-50%, -50%);
-            z-index: 2; /* Ensure zones are above SVG */
-            pointer-events: auto; /* Make zones interactive */
+            z-index: 2;
+            pointer-events: auto;
+            cursor: grab;
         }
+        .zone:active { cursor: grabbing; }
+
+        /* Specific styles based on type */
+        .zone-Technical { border-color: #ffaa6a; background-color: rgba(90, 70, 50, 0.7); }
+        .zone-Medical { border-color: #6a6aff; background-color: rgba(50, 50, 90, 0.7); }
+        .zone-Command { border-color: #6acF70; background-color: rgba(70, 90, 70, 0.8); }
+        .zone-Habitation { border-color: #aaaaff; background-color: rgba(70, 70, 90, 0.7); }
+        .zone-Security { border-color: #ff7777; background-color: rgba(90, 60, 60, 0.7); }
+        .zone-Access { border-color: #aaaaaa; background-color: rgba(60, 60, 60, 0.7); }
+        .zone-Amenity { border-color: #ffff99; background-color: rgba(90, 90, 60, 0.7); }
+        .zone-Cargo { border-color: #ffa500; background-color: rgba(90, 75, 50, 0.7); }
+        .zone-Industrial { border-color: #b0a090; background-color: rgba(70, 65, 60, 0.7); }
+        .zone-Science { border-color: #87ceeb; background-color: rgba(60, 80, 90, 0.7); }
+        .zone-Military { border-color: #90ee90; background-color: rgba(60, 90, 60, 0.7); }
+        .zone-Damaged { border-color: #ff4444; color: #ffaaaa; background-color: rgba(90, 50, 50, 0.7); }
         .zone-major { width: 160px; min-height: 65px; font-weight: bold; border-width: 2px; padding: 12px; z-index: 5; }
-        .zone-command { background-color: rgba(70, 90, 70, 0.8); border-color: #6acF70;}
-        .zone-medbay { background-color: rgba(50, 50, 90, 0.7); border-color: #6a6aff;}
-        .zone-engineering { background-color: rgba(90, 70, 50, 0.7); border-color: #ffaa6a;}
-        .zone-danger { border-color: #ff4444; color: #ffaaaa; background-color: rgba(90, 50, 50, 0.7); }
 
         /* --- Legend Styles --- */
         #legend {
@@ -116,8 +110,8 @@
             border-radius: 5px;
             padding: 10px 15px;
             margin-top: 30px;
-            width: 85%;
-            max-width: 1000px;
+            width: 90%; /* Match container width */
+            max-width: 800px; /* Match container max-width */
             box-sizing: border-box;
         }
         #legend h4 {
@@ -157,11 +151,18 @@
         }
         /* Style examples to match map elements */
         .zone-normal-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; }
-        .zone-major-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; border-width: 2px; /* Simulate major look */ }
-        .zone-command-example { background-color: rgba(70, 90, 70, 0.8); border-color: #6acF70; }
-        .zone-medbay-example { background-color: rgba(50, 50, 90, 0.7); border-color: #6a6aff; }
-        .zone-engineering-example { background-color: rgba(90, 70, 50, 0.7); border-color: #ffaa6a; }
-        .zone-danger-example { background-color: rgba(90, 50, 50, 0.7); border-color: #ff4444; }
+        .zone-major-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; border-width: 2px; }
+        .zone-Command-example { background-color: rgba(70, 90, 70, 0.8); border-color: #6acF70; }
+        .zone-Medical-example { background-color: rgba(50, 50, 90, 0.7); border-color: #6a6aff; }
+        .zone-Technical-example { background-color: rgba(90, 70, 50, 0.7); border-color: #ffaa6a; }
+        .zone-Habitation-example { background-color: rgba(70, 70, 90, 0.7); border-color: #aaaaff; }
+        .zone-Security-example { background-color: rgba(90, 60, 60, 0.7); border-color: #ff7777; }
+        .zone-Access-example { background-color: rgba(60, 60, 60, 0.7); border-color: #aaaaaa; }
+        .zone-Amenity-example { background-color: rgba(90, 90, 60, 0.7); border-color: #ffff99; }
+        .zone-Cargo-example { background-color: rgba(90, 75, 50, 0.7); border-color: #ffa500; }
+        .zone-Science-example { background-color: rgba(60, 80, 90, 0.7); border-color: #87ceeb; }
+        .zone-Military-example { background-color: rgba(60, 90, 60, 0.7); border-color: #90ee90; }
+        .zone-Damaged-example { background-color: rgba(90, 50, 50, 0.7); border-color: #ff4444; }
         .connector-corridor-example { background-color: rgba(76, 175, 80, 0.6); height: 4px; }
         .connector-vent-example {
             height: 2px;
@@ -178,12 +179,43 @@
 </head>
 <body>
 
-    <h1>Alien RPG Map Generator (Prototype v4)</h1> <div class="controls">
-        <div> <label for="facility-type">Type:</label> <select id="facility-type"> <option value="Colony">Colony</option> <option value="Station">Station</option> <option value="Ship">Ship</option> <option value="Outpost">Military/Science Outpost</option> <option value="Derelict">Derelict (Random Mix)</option> </select> </div>
-        <div> <label for="facility-size">Size:</label> <select id="facility-size"> <option value="Small">Small</option> <option value="Medium" selected>Medium</option> <option value="Large">Large</option> </select> </div>
-        <div> <label for="layout-style">Layout:</label> <select id="layout-style"> <option value="Grid">Grid</option> <option value="HubAndSpoke">Hub-and-Spoke</option> <option value="Linear">Linear</option> </select> </div>
-        <button id="generate-button">Generate Map</button>
+    <h1>Angry Static's &quot;Map&quot; Generator</h1>
+
+    <div class="controls">
+        <div>
+            <label for="facility-type">Type:</label>
+            <select id="facility-type">
+                <option value="Colony">Colony</option>
+                <option value="Station">Station</option>
+                <option value="Ship">Ship</option>
+                <option value="Outpost">Outpost</option>
+                <option value="Military">Military Base</option>
+                <option value="Science">Science Outpost</option>
+                <option value="DerelictShip">Derelict Ship</option>
+            </select>
         </div>
+        <div>
+            <label for="facility-size">Size:</label>
+            <select id="facility-size">
+                <option value="Small">Small</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Large">Large</option>
+            </select>
+        </div>
+        <div>
+            <label for="layout-algorithm">Layout:</label>
+            <select id="layout-algorithm">
+                <option value="ForceDirected" selected>Force-Directed</option>
+                <option value="Circle">Circle</option>
+                <option value="Square">Square</option>
+                <option value="Plus">Plus</option>
+                <option value="CShape">C-Shape</option>
+                <option value="HShape">H-Shape</option>
+                <option value="LShape">L-Shape</option>
+            </select>
+        </div>
+        <button id="generate-graph-map">Generate Graph Map</button>
+    </div>
 
     <div id="map-container">
         </div>
@@ -195,25 +227,32 @@
             <li><span class="legend-box zone-major-example"></span> Major Zone</li>
             <li><span class="legend-line connector-corridor-example"></span> Corridor</li>
             <li><span class="legend-line connector-vent-example"></span> Vent / Duct</li>
-            <li><span class="legend-box zone-command-example"></span> Command/Ops</li>
-            <li><span class="legend-box zone-medbay-example"></span> Medical</li>
-            <li><span class="legend-box zone-engineering-example"></span> Engineering/Tech</li>
-            <li><span class="legend-box zone-danger-example"></span> Damaged/Hazard</li>
+            <li><span class="legend-box zone-Command-example"></span> Command</li>
+            <li><span class="legend-box zone-Medical-example"></span> Medical</li>
+            <li><span class="legend-box zone-Technical-example"></span> Technical</li>
+            <li><span class="legend-box zone-Habitation-example"></span> Habitation</li>
+            <li><span class="legend-box zone-Security-example"></span> Security</li>
+            <li><span class="legend-box zone-Access-example"></span> Access</li>
+            <li><span class="legend-box zone-Amenity-example"></span> Amenity</li>
+            <li><span class="legend-box zone-Cargo-example"></span> Cargo/Ind.</li>
+            <li><span class="legend-box zone-Science-example"></span> Science</li>
+            <li><span class="legend-box zone-Military-example"></span> Military</li>
+            <li><span class="legend-box zone-Damaged-example"></span> Damaged</li>
         </ul>
     </div>
 
 
     <script>
         // --- DOM Elements ---
-        let facilityTypeSelect, facilitySizeSelect, layoutStyleSelect, generateButton, mapContainer;
+        let facilityTypeSelect, facilitySizeSelect, layoutAlgorithmSelect, generateButton, mapContainer;
         try {
             facilityTypeSelect = document.getElementById('facility-type');
             facilitySizeSelect = document.getElementById('facility-size');
-            layoutStyleSelect = document.getElementById('layout-style');
-            generateButton = document.getElementById('generate-button');
+            layoutAlgorithmSelect = document.getElementById('layout-algorithm');
+            generateButton = document.getElementById('generate-graph-map');
             mapContainer = document.getElementById('map-container');
 
-            if (!facilityTypeSelect || !facilitySizeSelect || !layoutStyleSelect || !generateButton || !mapContainer) {
+            if (!facilityTypeSelect || !facilitySizeSelect || !layoutAlgorithmSelect || !generateButton || !mapContainer) {
                 throw new Error("One or more essential HTML elements not found!");
             }
             console.log("DOM elements obtained successfully.");
@@ -223,212 +262,206 @@
             if (body) { body.innerHTML = `<p style="color:red; font-size: 1.2em; padding: 20px;">FATAL ERROR: Could not initialize page elements. ${error.message}</p>`; }
         }
 
-
         // --- Data Definitions (SINGLE, CORRECTED DEFINITION) ---
-        const coreZones = {
-             Colony: ['Command/Admin', 'Habitation Blocks', 'Medbay', 'Engineering (Power/Life Support)', 'Atmosphere Processing', 'Cargo/Industrial Zone', 'Security Post', 'Main Communications'],
-             Station: ['Command Center', 'Habitation Ring', 'Medbay', 'Engineering Core', 'Docking Bay(s)', 'Cargo Hold', 'Science Labs', 'Security Hub', 'Life Support Center'],
-             Ship: ['Bridge', 'Crew Quarters', 'Medbay', 'Engineering Deck', 'Cargo Bay', 'Cryosleep Chamber', 'Airlock Section', 'Primary Life Support'],
-             Outpost: ['Operations Center (Ops)', 'Barracks/Quarters', 'Small Infirmary', 'Generator Room', 'Armory/Storage', 'Perimeter Access Point', 'Comms Relay', 'Basic Life Support'],
-             Derelict: ['Damaged Bridge', 'Breached Habitation', 'Offline Engineering', 'Flooded Cargo Bay', 'Makeshift Medbay', 'Mysterious Lab', 'Compromised Airlock', 'Nest Area', 'Failing Life Support']
+        // *** The erroneous first declaration has been REMOVED ***
+        const facilityData = {
+            Colony: {
+                core: [ { name: 'Command/Admin', type: 'Command'}, { name: 'Habitation Blocks', type: 'Habitation'}, { name: 'Medbay', type: 'Medical'}, { name: 'Engineering (Power/Life Support)', type: 'Technical'}, { name: 'Atmosphere Processing', type: 'Technical'}, { name: 'Cargo/Industrial Zone', type: 'Cargo'} ],
+                optional: [ { name: 'Security Post', type: 'Security'}, { name: 'Main Communications', type: 'Technical'}, { name: 'Mining Control', type: 'Industrial'}, { name: 'Hydroponics', type: 'Amenity'}, { name: 'Vehicle Bay', type: 'Access'}, { name: 'Recreation Zone', type: 'Amenity'}, { name: 'Marketplace', type: 'Amenity'}, { name: 'Large Mess Hall', type: 'Amenity'} ]
+            },
+            Station: {
+                core: [ { name: 'Command Center', type: 'Command'}, { name: 'Habitation Ring', type: 'Habitation'}, { name: 'Medbay', type: 'Medical'}, { name: 'Engineering Core', type: 'Technical'}, { name: 'Docking Bay(s)', type: 'Access'}, { name: 'Cargo Hold', type: 'Cargo'}, { name: 'Life Support Center', type: 'Technical'} ],
+                optional: [ { name: 'Science Labs', type: 'Science'}, { name: 'Security Hub', type: 'Security'}, { name: 'Recreation Area', type: 'Amenity'}, { name: 'Customs Checkpoint', type: 'Security'}, { name: 'Observation Deck', type: 'Amenity'}, { name: 'Shuttle Bay', type: 'Access'}, { name: 'Trade Hub Market', type: 'Amenity'}, { name: 'Bar/Cantina', type: 'Amenity'} ]
+            },
+            Ship: {
+                core: [ { name: 'Bridge', type: 'Command'}, { name: 'Crew Quarters', type: 'Habitation'}, { name: 'Medbay', type: 'Medical'}, { name: 'Engineering Deck', type: 'Technical'}, { name: 'Cargo Bay', type: 'Cargo'}, { name: 'Airlock Section', type: 'Access'}, { name: 'Primary Life Support', type: 'Technical'} ],
+                optional: [ { name: 'Cryosleep Chamber', type: 'Habitation'}, { name: 'Armory', type: 'Security'}, { name: 'Science Station', type: 'Science'}, { name: 'Observation Pod', type: 'Amenity'}, { name: 'Shuttle Bay', type: 'Access'}, { name: 'Brig', type: 'Security'}, { name: 'Ships Mess', type: 'Amenity'}, { name: 'Small Rec Room', type: 'Amenity'} ]
+            },
+            Outpost: {
+                 core: [ { name: 'Operations Center (Ops)', type: 'Command'}, { name: 'Barracks/Quarters', type: 'Habitation'}, { name: 'Small Infirmary', type: 'Medical'}, { name: 'Generator Room', type: 'Technical'}, { name: 'Armory/Storage', type: 'Security'}, { name: 'Perimeter Access', type: 'Access'} ],
+                 optional: [ { name: 'Comms Relay', type: 'Technical'}, { name: 'Basic Life Support', type: 'Technical'}, { name: 'Vehicle Maintenance', type: 'Technical'}, { name: 'Small Lab', type: 'Science'}, { name: 'Holding Cells', type: 'Security'}, { name: 'Watchtower', type: 'Security'}, { name: 'Landing Zone', type: 'Access'}, { name: 'Basic Mess Area', type: 'Amenity'} ]
+            },
+            Military: {
+                 core: [ { name: 'Command Center (CIC)', type: 'Command'}, { name: 'Barracks', type: 'Habitation'}, { name: 'Armory', type: 'Security'}, { name: 'Security Hub', type: 'Security'}, { name: 'Mess Hall', type: 'Amenity'}, { name: 'Motor Pool/Hangar', type: 'Access'}, { name: 'Workshop/Maintenance', type: 'Technical'} ],
+                 optional: [ { name: 'Infirmary', type: 'Medical'}, { name: 'Brig/Holding', type: 'Security'}, { name: 'Firing Range', type: 'Amenity'}, { name: 'Comms Center', type: 'Technical'}, { name: 'Power Generator', type: 'Technical'}, { name: 'Perimeter Defenses', type: 'Security'}, { name: 'Officer Quarters', type: 'Habitation'}, { name: 'Ready Room', type: 'Military'} ]
+            },
+            Science: {
+                 core: [ { name: 'Main Lab Complex', type: 'Science'}, { name: 'Admin/Observation', type: 'Command'}, { name: 'Specimen Storage', type: 'Science'}, { name: 'Small Habitation Pod', type: 'Habitation'}, { name: 'Life Support/Generator', type: 'Technical'}, { name: 'Sample Intake/Airlock', type: 'Access'} ],
+                 optional: [ { name: 'Quarantine Lab', type: 'Medical'}, { name: 'Advanced Sensor Array', type: 'Technical'}, { name: 'Data Archive/Library', type: 'Science'}, { name: 'Small Workshop', type: 'Technical'}, { name: 'Hydroponics Lab', type: 'Science'}, { name: 'Recreation/Mess Pod', type: 'Amenity'}, { name: 'Emergency Shelter', type: 'Habitation'} ]
+            },
+            DerelictShip: {
+                 core: [ { name: 'Damaged Bridge', type: 'Damaged'}, { name: 'Breached Crew Quarters', type: 'Damaged'}, { name: 'Offline Engineering', type: 'Damaged'}, { name: 'Flooded Cargo Bay', type: 'Damaged'}, { name: 'Compromised Airlock', type: 'Damaged'}, { name: 'Flickering Life Support', type: 'Damaged'} ],
+                 optional: [ { name: 'Makeshift Medbay', type: 'Medical'}, { name: 'Scavenger\'s Stash', type: 'Cargo'}, { name: 'Xeno Nest Area', type: 'Damaged'}, { name: 'Barricaded Section', type: 'Security'}, { name: 'Exposed Service Ducts', type: 'Access'}, { name: 'Cryo Bay (Malfunctioning)', type: 'Damaged'}, { name: 'Wreckage Field Access', type: 'Access'}, { name: 'Unknown Signal Source', type: 'Science'} ]
+            }
         };
-        const optionalZones = {
-             Colony: ['Mining Control', 'Hydroponics', 'Vehicle Bay', 'Recreation Zone', 'Marketplace', 'Waste Recycling', 'Shuttle Pad', 'Large Mess Hall', 'Education Center', 'Maintenance Tunnels Access'],
-             Station: ['Customs/Security Checkpoint', 'Observation Deck', 'Zero-G Gym', 'Shuttle Bay', 'Long-Range Comms', 'Waste Disposal', 'Manufacturing Area', 'Trade Hub Market', 'Bar/Cantina', 'Ventilation Hub'],
-             Ship: ['Science Scanner Room', 'Observation Pod', 'Shuttle Bay', 'Probe Launch Tube', 'Brig', 'Vehicle Bay (Large Ship)', 'Auxiliary Control', 'Ships Mess', 'Small Rec Room', 'Service Ducts Access'],
-             Outpost: ['Vehicle Maintenance Bay', 'Small Lab', 'Holding Cells', 'Watchtower', 'Underground Access', 'Landing Zone', 'Basic Mess Area', 'Perimeter Vents'],
-             Derelict: ['Ancient Ruins Section', 'Fungal Garden', 'Trapped Shuttle', 'Wreckage Field Access', 'Hidden Stash', 'Queen Chamber', 'Barricaded Area', 'Makeshift Shrine', 'Collapsed Tunnel']
-        };
-        const majorZoneKeywords = ['Habitation', 'Command', 'Bridge', 'Engineering', 'Cargo', 'Docking', 'Ops', 'Industrial', 'Ring', 'Deck', 'Blocks', 'Center', 'Core', 'Bay(s)'];
+        // --- Keyword Definitions ---
         const habitationKeywords = ['Habitation', 'Quarters', 'Barracks', 'Ring', 'Cryosleep'];
-        const amenityKeywords = ['Mess Hall', 'Mess Area', 'Canteen', 'Recreation', 'Marketplace', 'Gym', 'Bar', 'Cantina', 'Observation Deck', 'Chapel', 'Shrine', 'Education Center', 'Rec Room', 'Trade Hub'];
-        const criticalFunctionKeywords = ['Command', 'Bridge', 'Ops', 'Engineering', 'Power', 'Generator', 'Life Support', 'Atmosphere', 'Comms', 'Communications'];
-        const technicalKeywords = ['Engineering', 'Generator', 'Power', 'Life Support', 'Atmosphere', 'Maintenance', 'Worksh', 'Lab', 'Scanner', 'Server', 'Comms', 'Technical', 'Ventilation'];
-        const securityKeywords = ['Security', 'Armory', 'Brig', 'Checkpoint', 'Holding Cells'];
+        const amenityKeywords = ['Mess', 'Recreation', 'Marketplace', 'Gym', 'Bar', 'Cantina', 'Observation', 'Chapel', 'Shrine', 'Education', 'Rec Room', 'Trade Hub', 'Hydroponics'];
+        const technicalKeywords = ['Engineering', 'Generator', 'Power', 'Life Support', 'Atmosphere', 'Maintenance', 'Worksh', 'Lab', 'Scanner', 'Server', 'Comms', 'Technical', 'Ventilation', 'Science', 'Sensor'];
+        const commandKeywords = ['Command', 'Bridge', 'Ops', 'Admin'];
+        const accessKeywords = ['Airlock', 'Docking', 'Bay', 'Access', 'Shuttle', 'Landing Zone', 'Vehicle', 'Hangar', 'Motor Pool'];
+        const securityKeywords = ['Security', 'Armory', 'Brig', 'Checkpoint', 'Holding Cells', 'Defenses', 'Watchtower'];
+        const cargoKeywords = ['Cargo', 'Industrial', 'Storage', 'Mining', 'Manufacturing', 'Stash'];
+        const majorZoneKeywords = ['Habitation', 'Command', 'Bridge', 'Engineering', 'Cargo', 'Docking', 'Ops', 'Industrial', 'Ring', 'Deck', 'Blocks', 'Center', 'Core', 'Bay(s)', 'Complex', 'Hangar', 'Pool'];
+        const scienceKeywords = ['Science', 'Lab', 'Specimen', 'Archive', 'Sensor', 'Quarantine', 'Data'];
+        const militaryKeywords = ['Military', 'Ready Room', 'Firing Range'];
+        const damagedKeywords = ['Damaged', 'Breached', 'Offline', 'Flooded', 'Compromised', 'Flickering', 'Nest', 'Wreckage', 'Collapsed', 'Malfunctioning'];
 
-        // --- Global Array to Store Placed Zone Data ---
-        let placedZoneData = [];
 
-        // --- Event Listeners ---
+        // --- Global Store for Node Positions ---
+        let nodePositions = {};
+
+        // --- Event Listener ---
         if (generateButton) {
-            generateButton.addEventListener('click', generateMap);
+            generateButton.addEventListener('click', displayGeneratedGraphMap);
         }
-        // Removed listener for exportButton
-
-        // --- Helper Functions for Zone Adjustment ---
-        function containsZoneType(zoneList, keywords) { return zoneList.some(zone => keywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase()))); }
-        function findZoneByType(zoneList, keywords) { return zoneList.find(zone => keywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase()))); }
-        function getRandomNewZoneOfType(targetList, zonePool, keywords) { const available = zonePool.filter(zone => !targetList.includes(zone) && keywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase())) ); if (available.length === 0) return null; return available[Math.floor(Math.random() * available.length)]; }
-        function getRandomNewZoneNotOfType(targetList, zonePool, keywordsToAvoid) { const available = zonePool.filter(zone => !targetList.includes(zone) && !keywordsToAvoid.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase())) ); if (available.length === 0) { const fallbackPool = zonePool.filter(zone => !targetList.includes(zone)); return fallbackPool.length > 0 ? fallbackPool[Math.floor(Math.random() * fallbackPool.length)] : null; } return available[Math.floor(Math.random() * available.length)]; }
-
-        // --- Zone Adjustment Logic ---
-        function adjustZonesForSizeAndType(initialZones, baseZonePool, optionalZonePool, size, type) {
-             console.log("Adjusting zones. Initial:", initialZones);
-            let adjustedZones = [...initialZones]; const allZonePool = [...new Set([...baseZonePool, ...optionalZonePool])];
-            if (!containsZoneType(adjustedZones, habitationKeywords)) { const newHab = getRandomNewZoneOfType(adjustedZones, allZonePool, habitationKeywords); if (newHab) { console.log(`Adding Habitation: ${newHab}`); adjustedZones.push(newHab); } else { console.error(`CRITICAL - Could not find Habitation zone!`); } }
-            let amenityCount = adjustedZones.filter(zone => amenityKeywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase()))).length; const luxuryAmenities = ['Marketplace', 'Zero-G Gym', 'Observation Deck', 'Trade Hub', 'Bar/Cantina', 'Cinema', 'Education Center'];
-            if (size === 'Small') { const maxAmenities = (type === 'Station' || type === 'Colony') ? 1 : 0; let removedCount = 0; while(amenityCount > maxAmenities && removedCount < 5) { let removed = false; const luxIdx = adjustedZones.findIndex(zone => luxuryAmenities.some(lux => zone.toLowerCase().includes(lux.toLowerCase()))); if(luxIdx !== -1) { console.log(`Small: Removing luxury amenity: ${adjustedZones[luxIdx]}`); adjustedZones.splice(luxIdx, 1); amenityCount--; removed = true; } else { const otherAmenityIdx = adjustedZones.findIndex(zone => amenityKeywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase())) && !zone.toLowerCase().includes("mess")); if(otherAmenityIdx !== -1) { console.log(`Small: Removing excess amenity: ${adjustedZones[otherAmenityIdx]}`); adjustedZones.splice(otherAmenityIdx, 1); amenityCount--; removed = true; } } if(!removed) break; removedCount++; } }
-            else if (size === 'Medium' && amenityCount === 0) { const newAmenity = getRandomNewZoneOfType(adjustedZones, optionalZonePool, amenityKeywords); if (newAmenity) { console.log(`Medium: Adding amenity: ${newAmenity}`); adjustedZones.push(newAmenity); amenityCount++; } else { console.warn("Medium: Could not find amenity zone."); } }
-            else if (size === 'Large') { const targetAmenities = (type === 'Colony' || type === 'Station') ? 3 : 2; let addedCount = 0; while (amenityCount < targetAmenities && addedCount < 3) { const newAmenity = getRandomNewZoneOfType(adjustedZones, optionalZonePool, amenityKeywords); if (newAmenity) { console.log(`Large: Adding amenity: ${newAmenity}`); adjustedZones.push(newAmenity); amenityCount++; addedCount++; } else { console.warn("Large: Could not find more amenities."); break; } } }
-            const criticalChecks = { 'Command': ['Command', 'Bridge', 'Ops'], 'Engineering': ['Engineering', 'Power', 'Generator'], 'Life Support': ['Life Support', 'Atmosphere'] };
-            for(const funcName in criticalChecks) { if (!containsZoneType(adjustedZones, criticalChecks[funcName])) { const newCritical = getRandomNewZoneOfType(adjustedZones, baseZonePool, criticalChecks[funcName]) || getRandomNewZoneOfType(adjustedZones, allZonePool, criticalChecks[funcName]); if(newCritical) { console.warn(`Adding missing critical ${funcName}: ${newCritical}`); adjustedZones.push(newCritical); } else { console.error(`CRITICAL FAILURE: Could not find ${funcName}-type zone!`); } } }
-            const finalUniqueZones = [...new Set(adjustedZones)]; console.log("Adjustment complete. Final zones:", finalUniqueZones); return finalUniqueZones;
-        }
-
-        // --- Main Generation Function ---
-        function generateMap() {
-            console.log("--- generateMap START ---");
-            if (!mapContainer) { console.error("generateMap cannot run: mapContainer not found."); return; }
-            try {
-                const type = facilityTypeSelect.value; const size = facilitySizeSelect.value; const layoutStyle = layoutStyleSelect.value;
-                mapContainer.innerHTML = '';
-                const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svgElement.setAttribute('id', 'connector-svg'); mapContainer.appendChild(svgElement);
-                placedZoneData = [];
-                console.log(`Generating map for Type: ${type}, Size: ${size}, Layout: ${layoutStyle}`);
-                let effectiveType = type; if (!coreZones[effectiveType] || !optionalZones[effectiveType]) { effectiveType = 'Derelict'; }
-                const baseZonePool = coreZones[effectiveType] ? [...coreZones[effectiveType]] : []; const optionalZonePool = optionalZones[effectiveType] ? [...optionalZones[effectiveType]] : [];
-                let numCoreTarget, numOptionalTarget; switch (size) { case 'Small': numCoreTarget = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 2); numOptionalTarget = Math.min(optionalZonePool.length, Math.floor(Math.random() * 2) + 1); break; case 'Large': numCoreTarget = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 4); numOptionalTarget = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 3); break; case 'Medium': default: numCoreTarget = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 3); numOptionalTarget = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 2); break; }
-                console.log(`Target counts - Core: ${numCoreTarget}, Optional: ${numOptionalTarget}`);
-                let initialSelectedZones = selectRandomElements(baseZonePool, numCoreTarget); initialSelectedZones = initialSelectedZones.concat(selectRandomElements(optionalZonePool, numOptionalTarget));
-                let finalSelectedZones = adjustZonesForSizeAndType( initialSelectedZones, baseZonePool, optionalZonePool, size, effectiveType );
-                if (finalSelectedZones.length === 0) { console.warn("No zones selected."); mapContainer.innerHTML = '<p style="color: yellow; padding: 20px;">No zones generated.</p>'; return; }
-                const containerWidth = mapContainer.offsetWidth; const containerHeight = mapContainer.offsetHeight; console.log("Container dimensions:", containerWidth, containerHeight);
-                if (containerWidth <= 0 || containerHeight <= 0) { console.error("Container size issue."); mapContainer.innerHTML = '<p style="color: red; padding: 20px;">Error: Container size issue.</p>'; return; }
-                const layoutOptions = { size: size };
-                console.log(`Calling layout function: ${layoutStyle}`);
-                switch (layoutStyle) { case 'HubAndSpoke': layoutHubAndSpoke(finalSelectedZones, containerWidth, containerHeight, layoutOptions); break; case 'Linear': layoutLinear(finalSelectedZones, containerWidth, containerHeight, layoutOptions); break; case 'Grid': default: layoutGrid(finalSelectedZones, containerWidth, containerHeight, layoutOptions); break; }
-                 console.log("Layout complete. Placed zones data length:", placedZoneData.length);
-                if (placedZoneData.length > 0) { console.log("Appending zone elements to DOM..."); placedZoneData.forEach(zoneInfo => { if (zoneInfo && zoneInfo.element instanceof Node) { mapContainer.appendChild(zoneInfo.element); } else { console.error("Invalid element found in placedZoneData for:", zoneInfo ? zoneInfo.name : 'unknown'); } }); } else { console.warn("No zone data populated."); }
-                 console.log("Calling drawConnections..."); drawConnections(placedZoneData, layoutStyle, svgElement);
-                console.log("--- generateMap END ---");
-            } catch (error) { console.error("!!! Error during map generation:", error); mapContainer.innerHTML = `<p style="color: red; padding: 20px;">An error occurred: ${error.message}. Check console (F12).</p>`; }
-        }
-
-        // --- Helper: Create Zone Div ---
-        function createZoneElement(zoneName) {
-            const zoneDiv = document.createElement('div'); zoneDiv.classList.add('zone'); zoneDiv.textContent = zoneName;
-            const lowerZoneName = zoneName.toLowerCase(); if (majorZoneKeywords.some(keyword => lowerZoneName.includes(keyword.toLowerCase()))) { zoneDiv.classList.add('zone-major'); }
-            if (lowerZoneName.includes('command') || lowerZoneName.includes('bridge') || lowerZoneName.includes('ops')) { zoneDiv.classList.add('zone-command'); } else if (lowerZoneName.includes('medbay') || lowerZoneName.includes('infirmary')) { zoneDiv.classList.add('zone-medbay'); } else if (lowerZoneName.includes('engineering') || lowerZoneName.includes('generator') || lowerZoneName.includes('power')) { zoneDiv.classList.add('zone-engineering'); } else if (lowerZoneName.includes('damaged') || lowerZoneName.includes('breached') || lowerZoneName.includes('nest') || lowerZoneName.includes('offline') || lowerZoneName.includes('flooded') || lowerZoneName.includes('compromised')) { zoneDiv.classList.add('zone-danger'); } return zoneDiv;
-        }
-
-        // --- Layout Algorithms (Populate placedZoneData) ---
-        function layoutGrid(zones, containerWidth, containerHeight, options) {
-            console.log("layoutGrid running...");
-            const sizeFactor = options.size === 'Large' ? 1.05 : (options.size === 'Small' ? 0.95 : 1.0);
-            const numZones = zones.length; if (numZones === 0) return;
-            let cols = Math.ceil(Math.sqrt(numZones * (containerWidth / containerHeight)));
-            if (numZones <= 4) cols = Math.min(numZones, 2); else if (numZones <= 6) cols = 3; else if (numZones <= 9) cols = 3; else cols = Math.max(3, Math.ceil(numZones / 3));
-            const rows = Math.ceil(numZones / cols);
-            const cellWidth = (containerWidth / cols); const cellHeight = (containerHeight / rows);
-            const paddingX = cellWidth * 0.15 * sizeFactor; const paddingY = cellHeight * 0.15 * sizeFactor;
-            const jitter = 0.15;
-            zones.forEach((zoneName, index) => {
-                const zoneDiv = createZoneElement(zoneName); const isMajor = zoneDiv.classList.contains('zone-major');
-                const elementWidth = isMajor ? 160 : 120; const elementHeight = isMajor ? 65 : 50;
-                const gridRow = Math.floor(index / cols); const gridCol = index % cols;
-                const targetX = (gridCol * cellWidth) + (cellWidth / 2) + (Math.random() - 0.5) * cellWidth * jitter;
-                const targetY = (gridRow * cellHeight) + (cellHeight / 2) + (Math.random() - 0.5) * cellHeight * jitter;
-                const finalX = Math.max(elementWidth / 2 + paddingX / 2, Math.min(containerWidth - elementWidth / 2 - paddingX / 2, targetX));
-                const finalY = Math.max(elementHeight / 2 + paddingY / 2, Math.min(containerHeight - elementHeight / 2 - 15, targetY));
-                zoneDiv.style.left = `${finalX}px`; zoneDiv.style.top = `${finalY}px`;
-                placedZoneData.push({ name: zoneName, element: zoneDiv, x: finalX, y: finalY, row: gridRow, col: gridCol });
-            });
-            console.log("layoutGrid finished.");
-        }
-        function layoutHubAndSpoke(zones, containerWidth, containerHeight, options) {
-            console.log("layoutHubAndSpoke running...");
-             const sizeFactor = options.size === 'Large' ? 1.15 : (options.size === 'Small' ? 0.85 : 1.0);
-             const numZones = zones.length; if (numZones === 0) return;
-             const centerX = containerWidth / 2; const centerY = containerHeight / 2;
-             let centralZoneIndex = zones.findIndex(name => /command|bridge|ops|hub|core/i.test(name));
-             if (centralZoneIndex === -1 || centralZoneIndex >= zones.length) centralZoneIndex = 0;
-             const centralZoneName = zones[centralZoneIndex]; const spokeZones = zones.filter((_, index) => index !== centralZoneIndex); const numSpokes = spokeZones.length;
-             const centralDiv = createZoneElement(centralZoneName); const centralIsMajor = centralDiv.classList.contains('zone-major');
-             const centralElementWidth = centralIsMajor ? 160 : 120; const centralElementHeight = centralIsMajor ? 65 : 50;
-             const centralX = Math.max(centralElementWidth / 2, Math.min(containerWidth - centralElementWidth / 2, centerX));
-             const centralY = Math.max(centralElementHeight / 2, Math.min(containerHeight - centralElementHeight / 2 - 15, centerY));
-             centralDiv.style.left = `${centralX}px`; centralDiv.style.top = `${centralY}px`; centralDiv.style.zIndex = '10';
-             const centralData = { name: centralZoneName, element: centralDiv, x: centralX, y: centralY, isHub: true };
-             placedZoneData.push(centralData);
-             if (numSpokes > 0) {
-                 const baseRadius = Math.min(containerWidth, containerHeight) * 0.32 * sizeFactor; const radiusVariation = 0.1 * sizeFactor;
-                 spokeZones.forEach((zoneName, index) => {
-                     const spokeDiv = createZoneElement(zoneName); const isMajor = spokeDiv.classList.contains('zone-major');
-                     const elementWidth = isMajor ? 160 : 120; const elementHeight = isMajor ? 65 : 50;
-                     const angle = (index / numSpokes) * 2 * Math.PI; const radius = baseRadius * (1 + (Math.random() - 0.5) * 2 * radiusVariation);
-                     const targetX = centerX + radius * Math.cos(angle); const targetY = centerY + radius * Math.sin(angle);
-                     const finalX = Math.max(elementWidth / 2, Math.min(containerWidth - elementWidth / 2, targetX));
-                     const finalY = Math.max(elementHeight / 2, Math.min(containerHeight - elementHeight / 2 - 15, targetY));
-                     spokeDiv.style.left = `${finalX}px`; spokeDiv.style.top = `${finalY}px`;
-                     placedZoneData.push({ name: zoneName, element: spokeDiv, x: finalX, y: finalY, isHub: false, hubRef: centralData });
-                 });
-             }
-             console.log("layoutHubAndSpoke finished.");
-        }
-        function layoutLinear(zones, containerWidth, containerHeight, options) {
-            console.log("layoutLinear running...");
-             const sizeFactor = options.size === 'Large' ? 0.9 : (options.size === 'Small' ? 1.05 : 1.0);
-             const numZones = zones.length; if (numZones === 0) return;
-             let requiredWidth = 0; const paddingBase = 30;
-             zones.forEach(zoneName => { const isMajor = majorZoneKeywords.some(keyword => zoneName.toLowerCase().includes(keyword.toLowerCase())); requiredWidth += isMajor ? 160 : 120; });
-             requiredWidth += Math.max(0, numZones - 1) * paddingBase * sizeFactor;
-             const minPadding = 20; let currentX;
-             if (requiredWidth < containerWidth - (2 * minPadding)) { currentX = (containerWidth - requiredWidth) / 2; }
-             else { console.warn("Linear layout content may exceed container width."); currentX = minPadding; }
-             const verticalCenter = containerHeight / 2; const verticalJitter = containerHeight * 0.1;
-             zones.forEach((zoneName, index) => {
-                 const zoneDiv = createZoneElement(zoneName); const isMajor = zoneDiv.classList.contains('zone-major');
-                 const elementWidth = isMajor ? 160 : 120; const elementHeight = isMajor ? 65 : 50;
-                 const targetX = currentX + elementWidth / 2; currentX += elementWidth + (paddingBase * sizeFactor);
-                 const targetY = verticalCenter + (Math.random() - 0.5) * verticalJitter;
-                 const finalY = Math.max(elementHeight / 2, Math.min(containerHeight - elementHeight / 2 - 15, targetY));
-                 zoneDiv.style.left = `${targetX}px`; zoneDiv.style.top = `${finalY}px`;
-                 placedZoneData.push({ name: zoneName, element: zoneDiv, x: targetX, y: finalY, index: index });
-             });
-             console.log("layoutLinear finished.");
-        }
-
 
         // --- Helper: Select Random Elements ---
         function selectRandomElements(arr, count) { if (!arr || arr.length === 0) return []; if (count <= 0) return []; if (count >= arr.length) { let fullShuffled = [...arr]; for (let i = fullShuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [fullShuffled[i], fullShuffled[j]] = [fullShuffled[j], fullShuffled[i]]; } return fullShuffled; } let shuffled = [...arr]; for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; } return shuffled.slice(0, count); }
 
-        // --- Draw Connections Function ---
-        function drawConnections(zoneData, layoutStyle, svgElement) {
-            console.log("drawConnections running...");
-            if (!svgElement || zoneData.length < 2) { console.log("Not enough data or no SVG element."); return; }
-            let maxX = 0, maxY = 0;
-             zoneData.forEach(zd => { if (!zd || !zd.element || typeof zd.x !== 'number' || typeof zd.y !== 'number') { console.warn("Skipping invalid zone data for SVG sizing:", zd); return; } const elementWidth = zd.element.classList.contains('zone-major') ? 160 : 120; const elementHeight = zd.element.classList.contains('zone-major') ? 65 : 50; maxX = Math.max(maxX, zd.x + elementWidth / 2); maxY = Math.max(maxY, zd.y + elementHeight / 2); });
-             const containerWidth = svgElement.parentNode.offsetWidth; const containerHeight = svgElement.parentNode.offsetHeight;
-             const svgWidth = Math.max(containerWidth, maxX + 20); const svgHeight = Math.max(containerHeight, maxY + 20);
-             svgElement.setAttribute('width', svgWidth); svgElement.setAttribute('height', svgHeight);
-             console.log(`SVG dimensions set to: ${svgWidth} x ${svgHeight}`);
-            const corridorConnections = new Set(); const ventConnections = new Set(); const corridorPairs = [];
-            if (layoutStyle === 'Grid') { zoneData.forEach((zone1, index1) => { zoneData.forEach((zone2, index2) => { if (index1 >= index2 || !zone1 || !zone2) return; const rowDiff = Math.abs(zone1.row - zone2.row); const colDiff = Math.abs(zone1.col - zone2.col); if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) { corridorPairs.push([zone1, zone2]); } }); }); }
-            else if (layoutStyle === 'HubAndSpoke') { const hub = zoneData.find(z => z && z.isHub); if (hub) { zoneData.forEach(zone => { if (zone && !zone.isHub) { corridorPairs.push([hub, zone]); } }); } }
-            else if (layoutStyle === 'Linear') { for (let i = 0; i < zoneData.length - 1; i++) { if(zoneData[i] && zoneData[i+1]) { corridorPairs.push([zoneData[i], zoneData[i + 1]]); } } }
-            corridorPairs.forEach(pair => { const zone1 = pair[0]; const zone2 = pair[1]; if (!zone1 || !zone2 || typeof zone1.x !== 'number' || typeof zone1.y !== 'number' || typeof zone2.x !== 'number' || typeof zone2.y !== 'number') { console.warn("Skipping corridor draw due to invalid zone data:", zone1, zone2); return; } const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', zone1.x); line.setAttribute('y1', zone1.y); line.setAttribute('x2', zone2.x); line.setAttribute('y2', zone2.y); line.setAttribute('class', 'connector-line connector-corridor'); svgElement.appendChild(line); const key = [zone1.name, zone2.name].sort().join('|'); corridorConnections.add(key); });
-            console.log(`Drew ${corridorConnections.size} corridor lines.`);
-            const ventPairs = []; const maxVentDistance = 300;
-            zoneData.forEach((zone1, index1) => { if (!zone1 || typeof zone1.x !== 'number' || typeof zone1.y !== 'number') return; const name1Lower = zone1.name.toLowerCase(); const isTech1 = technicalKeywords.some(k => name1Lower.includes(k.toLowerCase())); const isAccess1 = name1Lower.includes('access') || name1Lower.includes('vent') || name1Lower.includes('tunnel'); if (!isTech1 && !isAccess1) return; zoneData.forEach((zone2, index2) => { if (index1 >= index2 || !zone2 || typeof zone2.x !== 'number' || typeof zone2.y !== 'number') return; const name2Lower = zone2.name.toLowerCase(); const isTech2 = technicalKeywords.some(k => name2Lower.includes(k.toLowerCase())); let shouldVent = false; const distance = Math.sqrt(Math.pow(zone1.x - zone2.x, 2) + Math.pow(zone1.y - zone2.y, 2)); if (distance < maxVentDistance) { if (isTech1 && isTech2) { shouldVent = true; } else if (isAccess1 && isTech2) { shouldVent = true; } } if (shouldVent) { const key = [zone1.name, zone2.name].sort().join('|'); if (!corridorConnections.has(key) && !ventConnections.has(key)) { ventPairs.push([zone1, zone2]); ventConnections.add(key); } } }); });
-            ventPairs.forEach(pair => { const zone1 = pair[0]; const zone2 = pair[1]; if (!zone1 || !zone2 || typeof zone1.x !== 'number' || typeof zone1.y !== 'number' || typeof zone2.x !== 'number' || typeof zone2.y !== 'number') { console.warn("Skipping vent draw due to invalid zone data:", zone1, zone2); return; } const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', zone1.x); line.setAttribute('y1', zone1.y); line.setAttribute('x2', zone2.x); line.setAttribute('y2', zone2.y); line.setAttribute('class', 'connector-line connector-vent'); svgElement.appendChild(line); });
-            console.log(`Drew ${ventConnections.size} vent lines.`);
-            console.log("drawConnections finished.");
+        // --- Graph Generation Logic ---
+        function generateFacilityGraph(type, size) {
+            console.log(`Generating graph for ${size} ${type}`);
+            const nodes = []; const edges = []; const selectedNodeNames = new Set(); let nodeIdCounter = 0;
+            const typeData = facilityData[type]; if (!typeData) { console.error(`No data for type: ${type}`); return { nodes, edges }; }
+            const baseZonePool = typeData.core || []; const optionalZonePool = typeData.optional || [];
+            let numCore, numOptional; switch (size) { case 'Small': numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 2); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 2) + 0); break; case 'Large': numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 4); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 2); break; case 'Medium': default: numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 3); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 1); break; }
+            let potentialNodes = selectRandomElements(baseZonePool, numCore); potentialNodes = potentialNodes.concat(selectRandomElements(optionalZonePool, numOptional));
+            const ensureTypePresent = (keywords, defaultNode) => { if (!potentialNodes.some(n => n && keywords.some(k => n.name.includes(k)))) { const foundNode = baseZonePool.find(n => n && keywords.some(k => n.name.includes(k))) || optionalZonePool.find(n => n && keywords.some(k => n.name.includes(k))) || defaultNode; if(foundNode && !selectedNodeNames.has(foundNode.name)) { console.log(`Ensuring presence of type: ${defaultNode.type}`); potentialNodes.push(foundNode); } } };
+            if (type !== 'DerelictShip') { ensureTypePresent(commandKeywords, {name: 'Default Command', type: 'Command'}); ensureTypePresent(habitationKeywords, {name: 'Default Hab', type: 'Habitation'}); ensureTypePresent(technicalKeywords, {name: 'Default Engineering', type: 'Technical'}); }
+            potentialNodes.forEach(nodeData => { if (nodeData && nodeData.name && !selectedNodeNames.has(nodeData.name)) { nodes.push({ id: `node_${nodeIdCounter++}`, name: nodeData.name, type: nodeData.type || 'Unknown', isMajor: majorZoneKeywords.some(k => nodeData.name.includes(k)) }); selectedNodeNames.add(nodeData.name); } });
+            const edgeExists = (n1Id, n2Id) => edges.some(e => (e.source === n1Id && e.target === n2Id) || (e.source === n2Id && e.target === n1Id)); const addEdge = (n1, n2, type) => { if (n1 && n2 && n1.id && n2.id && n1.id !== n2.id && !edgeExists(n1.id, n2.id)) { edges.push({ source: n1.id, target: n2.id, type: type }); } };
+
+            if (type === 'DerelictShip') {
+                console.log("Applying Derelict edge logic..."); const connectionProb = 0.4;
+                for (let i = 0; i < nodes.length; i++) { for (let j = i + 1; j < nodes.length; j++) { if (Math.random() < connectionProb) { const node1OrigType = nodes[i].type === 'Damaged' ? 'Unknown' : nodes[i].type; const node2OrigType = nodes[j].type === 'Damaged' ? 'Unknown' : nodes[j].type; let edgeType = 'corridor'; if (technicalKeywords.includes(node1OrigType) && technicalKeywords.includes(node2OrigType) && Math.random() < 0.5) { edgeType = 'vent'; } addEdge(nodes[i], nodes[j], edgeType); } } }
+            } else {
+                const commandNode = nodes.find(n => n.type === 'Command'); const habNodes = nodes.filter(n => n.type === 'Habitation'); const techNodes = nodes.filter(n => n.type === 'Technical'); const accessNodes = nodes.filter(n => n.type === 'Access'); const amenityNodes = nodes.filter(n => n.type === 'Amenity'); const medbayNode = nodes.find(n => n.type === 'Medical'); const securityNodes = nodes.filter(n => n.type === 'Security'); const cargoNodes = nodes.filter(n => n.type === 'Cargo' || n.type === 'Industrial'); const scienceNodes = nodes.filter(n => n.type === 'Science');
+                if (commandNode) { securityNodes.forEach(sec => addEdge(commandNode, sec, 'corridor')); if (habNodes.length > 0) addEdge(commandNode, habNodes[0], 'corridor'); if (accessNodes.length > 0) addEdge(commandNode, accessNodes[0], 'corridor'); if (scienceNodes.length > 0) addEdge(commandNode, scienceNodes[0], 'corridor'); }
+                habNodes.forEach(hab => { amenityNodes.forEach(amn => addEdge(hab, amn, 'corridor')); if (medbayNode) addEdge(hab, medbayNode, 'corridor'); }); for(let i = 0; i < habNodes.length - 1; i++) { addEdge(habNodes[i], habNodes[i+1], 'corridor'); }
+                techNodes.forEach(tech1 => { techNodes.forEach(tech2 => { if(tech1.id < tech2.id) addEdge(tech1, tech2, 'vent'); }); accessNodes.forEach(acc => addEdge(tech1, acc, 'corridor')); cargoNodes.forEach(cargo => addEdge(tech1, cargo, 'corridor')); scienceNodes.forEach(sci => addEdge(tech1, sci, 'vent')); });
+                if(medbayNode && techNodes.length > 0) addEdge(medbayNode, techNodes[0], 'vent');
+                 scienceNodes.forEach(sci1 => { scienceNodes.forEach(sci2 => { if(sci1.id < sci2.id && Math.random() < 0.5) addEdge(sci1, sci2, 'corridor'); }); if(medbayNode) addEdge(sci1, medbayNode, 'corridor'); });
+                 securityNodes.forEach(sec => { accessNodes.forEach(acc => addEdge(sec, acc, 'corridor')); const brig = nodes.find(n => n.name === 'Brig' || n.name === 'Holding Cells'); if (brig) addEdge(sec, brig, 'corridor'); techNodes.forEach(tech => addEdge(sec, tech, 'vent')); });
+                 cargoNodes.forEach(cargo => { accessNodes.forEach(acc => addEdge(cargo, acc, 'corridor')); });
+                checkAndEnsureConnectivity(nodes, edges, addEdge);
+            }
+            console.log("Generated graph:", { nodes, edges }); return { nodes, edges };
         }
 
-        // --- Initial Map Generation on Load ---
+        /** Checks graph connectivity using BFS and adds edges if needed */
+        function checkAndEnsureConnectivity(nodes, edges, addEdgeFunc) {
+             if (nodes.length <= 1) return;
+             const adjacencyList = new Map(); nodes.forEach(n => {if(n && n.id) adjacencyList.set(n.id, []);});
+             edges.forEach(e => { if(e && e.source && e.target) { if (adjacencyList.has(e.source)) adjacencyList.get(e.source).push(e.target); if (adjacencyList.has(e.target)) adjacencyList.get(e.target).push(e.source); }});
+             const visited = new Set(); const queue = []; const startNode = nodes[0]; if (!startNode || !startNode.id) return;
+             queue.push(startNode.id); visited.add(startNode.id);
+             while (queue.length > 0) { const currentNodeId = queue.shift(); const neighbors = adjacencyList.get(currentNodeId) || []; neighbors.forEach(neighborId => { if (adjacencyList.has(neighborId) && !visited.has(neighborId)) { visited.add(neighborId); queue.push(neighborId); } }); }
+             if (visited.size < nodes.length) { console.warn("Graph is disconnected. Adding edges..."); const mainComponentNode = startNode; nodes.forEach(node => { if (node && node.id && !visited.has(node.id)) { console.log(`Connecting disconnected node ${node.name} to ${mainComponentNode.name}`); addEdgeFunc(node, mainComponentNode, 'corridor'); } }); }
+             else { console.log("Graph connectivity check passed."); }
+         }
+
+
+        // --- Main Function to Display Map ---
+        function displayGeneratedGraphMap() {
+            console.log("--- displayGeneratedGraphMap START ---");
+            if (!mapContainer) { console.error("Map container not found."); return; }
+            try {
+                const type = facilityTypeSelect.value; const size = facilitySizeSelect.value; const layoutAlgo = layoutAlgorithmSelect.value;
+                const facilityGraph = generateFacilityGraph(type, size);
+                if (!facilityGraph || !facilityGraph.nodes || facilityGraph.nodes.length === 0) { console.warn("Graph generation failed."); mapContainer.innerHTML = "<p style='color:orange;padding:20px;'>Could not generate map data.</p>"; return; }
+                mapContainer.innerHTML = '';
+                const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svgElement.setAttribute('id', 'connector-svg'); mapContainer.appendChild(svgElement);
+                nodePositions = {};
+                const containerWidth = mapContainer.offsetWidth; const containerHeight = mapContainer.offsetHeight;
+                console.log(`Calculating layout using: ${layoutAlgo}`);
+                switch (layoutAlgo) {
+                    case 'ForceDirected': layoutNodesForceDirected(facilityGraph.nodes, facilityGraph.edges, containerWidth, containerHeight); break;
+                    case 'Circle': layoutNodesSimpleCircle(facilityGraph.nodes, containerWidth, containerHeight); break;
+                    case 'Square': layoutNodesSquare(facilityGraph.nodes, containerWidth, containerHeight); break;
+                    case 'Plus': layoutNodesPlus(facilityGraph.nodes, containerWidth, containerHeight); break;
+                    case 'CShape': layoutNodesCShape(facilityGraph.nodes, containerWidth, containerHeight); break;
+                    case 'HShape': layoutNodesHShape(facilityGraph.nodes, containerWidth, containerHeight); break;
+                    case 'LShape': layoutNodesLShape(facilityGraph.nodes, containerWidth, containerHeight); break;
+                    default: console.warn(`Unknown layout: ${layoutAlgo}. Defaulting to Circle.`); layoutNodesSimpleCircle(facilityGraph.nodes, containerWidth, containerHeight); break;
+                }
+                console.log("Node positions calculated:", nodePositions);
+                let maxX = 0, maxY = 0; let minX = containerWidth, minY = containerHeight;
+                Object.values(nodePositions).forEach(pos => { if(pos && typeof pos.x === 'number' && typeof pos.y === 'number'){ maxX = Math.max(maxX, pos.x); maxY = Math.max(maxY, pos.y); minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y); } });
+                const nodeSizeEstimate = 160; const padding = nodeSizeEstimate / 2 + 20;
+                const svgWidth = Math.max(containerWidth, maxX + padding); const svgHeight = Math.max(containerHeight, maxY + padding);
+                svgElement.setAttribute('width', svgWidth); svgElement.setAttribute('height', svgHeight);
+                console.log(`SVG dimensions set to: ${svgWidth} x ${svgHeight}`);
+                renderNodes(facilityGraph.nodes, mapContainer);
+                renderEdges(facilityGraph.edges, nodePositions, svgElement, facilityGraph.nodes);
+                console.log("--- displayGeneratedGraphMap END ---");
+            } catch(error) {
+                 console.error("Error during displayGeneratedGraphMap:", error.message, error.stack, error);
+                 if (mapContainer) mapContainer.innerHTML = `<p style="color: red; padding: 20px;">An error occurred displaying the map: ${error.message}. Check console.</p>`;
+            }
+        }
+
+        // --- Layout Functions ---
+        function layoutNodesSimpleCircle(nodes, width, height) { console.log("Using Circle Layout"); const numNodes = nodes.length; if (numNodes === 0) return; const centerX = width / 2; const centerY = height / 2; const radius = Math.min(width, height) * 0.35; const angleStep = (2 * Math.PI) / numNodes; nodes.forEach((node, index) => { if(!node || !node.id) return; const angle = index * angleStep; const x = centerX + radius * Math.cos(angle); const y = centerY + radius * Math.sin(angle); nodePositions[node.id] = { x, y }; }); }
+        function layoutNodesForceDirected(nodes, edges, width, height) { console.log("Using Force-Directed Layout"); const iterations = 250; const repulsionStrength = 6000; const attractionStrength = 0.05; const idealEdgeLength = 120; const damping = 0.80; const overlapPadding = 10; const overlapStrength = 0.5; const nodeSizes = {}; nodes.forEach(node => { if (node && node.id) { const isMajor = majorZoneKeywords.some(k => node.name.toLowerCase().includes(k.toLowerCase())); nodeSizes[node.id] = { width: isMajor ? 160 : 100, height: isMajor ? 65 : 50 }; } }); nodePositions = {}; const margin = 50; nodes.forEach(node => { if (node && node.id) { nodePositions[node.id] = { x: Math.random() * (width - 2 * margin) + margin, y: Math.random() * (height - 2 * margin) + margin }; } }); console.log("Initialized with random positions."); let forces = {}; for (let i = 0; i < iterations; i++) { nodes.forEach(node => { if(node && node.id) forces[node.id] = { x: 0, y: 0 }; }); for (let j = 0; j < nodes.length; j++) { for (let k = j + 1; k < nodes.length; k++) { const node1 = nodes[j]; const node2 = nodes[k]; if (!node1 || !node2 || !node1.id || !node2.id) continue; const pos1 = nodePositions[node1.id]; const pos2 = nodePositions[node2.id]; if (!pos1 || !pos2) continue; const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) distance = 0.1; const repulsionForce = repulsionStrength / (distance * distance); const rfx = (dx / distance) * repulsionForce; const rfy = (dy / distance) * repulsionForce; if (forces[node1.id]) { forces[node1.id].x -= rfx; forces[node1.id].y -= rfy; } if (forces[node2.id]) { forces[node2.id].x += rfx; forces[node2.id].y += rfy; } const size1 = nodeSizes[node1.id] || { width: 100, height: 50 }; const size2 = nodeSizes[node2.id] || { width: 100, height: 50 }; const overlapX = (size1.width + size2.width) / 2 + overlapPadding - Math.abs(dx); const overlapY = (size1.height + size2.height) / 2 + overlapPadding - Math.abs(dy); if (overlapX > 0 && overlapY > 0) { const separationForce = overlapStrength * (overlapX + overlapY); const sfx = (dx / distance) * separationForce; const sfy = (dy / distance) * separationForce; if (forces[node1.id]) { forces[node1.id].x -= sfx; forces[node1.id].y -= sfy; } if (forces[node2.id]) { forces[node2.id].x += sfx; forces[node2.id].y += sfy; } } } } edges.forEach(edge => { if (!edge || !edge.source || !edge.target) return; const sourceNode = nodes.find(n => n && n.id === edge.source); const targetNode = nodes.find(n => n && n.id === edge.target); if (!sourceNode || !targetNode) return; const pos1 = nodePositions[sourceNode.id]; const pos2 = nodePositions[targetNode.id]; if (!pos1 || !pos2) return; const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) return; const force = attractionStrength * (distance - idealEdgeLength); const fx = (dx / distance) * force; const fy = (dy / distance) * force; if (forces[sourceNode.id]) { forces[sourceNode.id].x += fx; forces[sourceNode.id].y += fy; } if (forces[targetNode.id]) { forces[targetNode.id].x -= fx; forces[targetNode.id].y -= fy; } }); nodes.forEach(node => { if (!node || !node.id) return; const pos = nodePositions[node.id]; const force = forces[node.id]; if (!pos || !force) return; pos.x += force.x * damping; pos.y += force.y * damping; const nodeSize = nodeSizes[node.id] || { width: 100, height: 50 }; pos.x = Math.max(nodeSize.width / 2 + 5, Math.min(width - nodeSize.width / 2 - 5, pos.x)); pos.y = Math.max(nodeSize.height / 2 + 5, Math.min(height - nodeSize.height / 2 - 5, pos.y)); }); } centerGraph(nodes, width, height); console.log("Force-Directed layout calculation finished."); }
+        function centerGraph(nodes, width, height) { if (nodes.length === 0) return; let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; nodes.forEach(node => { if(!node || !node.id) return; const pos = nodePositions[node.id]; if(!pos) return; minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y); maxX = Math.max(maxX, pos.x); maxY = Math.max(maxY, pos.y); }); if (!isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY)) return; const graphWidth = maxX - minX; const graphHeight = maxY - minY; const graphCenterX = minX + graphWidth / 2; const graphCenterY = minY + graphHeight / 2; const containerCenterX = width / 2; const containerCenterY = height / 2; const shiftX = containerCenterX - graphCenterX; const shiftY = containerCenterY - graphCenterY; nodes.forEach(node => { if(node && node.id && nodePositions[node.id]){ nodePositions[node.id].x += shiftX; nodePositions[node.id].y += shiftY;} }); }
+        function layoutNodesSquare(nodes, width, height) { console.log("Using Square Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const side = Math.min(width - 2 * margin, height - 2 * margin); const halfSide = side / 2; const centerX = width / 2; const centerY = height / 2; const perimeter = side * 4; const spacing = perimeter / numNodes; let currentDist = 0; nodes.forEach((node, index) => { let x, y; if (currentDist < side) { x = centerX - halfSide + currentDist; y = centerY - halfSide; } else if (currentDist < side * 2) { x = centerX + halfSide; y = centerY - halfSide + (currentDist - side); } else if (currentDist < side * 3) { x = centerX + halfSide - (currentDist - side * 2); y = centerY + halfSide; } else { x = centerX - halfSide; y = centerY + halfSide - (currentDist - side * 3); } nodePositions[node.id] = { x, y }; currentDist += spacing; }); }
+        function layoutNodesPlus(nodes, width, height) { console.log("Using Plus Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const centerX = width / 2; const centerY = height / 2; const armLength = Math.min(width, height) * 0.35; const hasCenterNode = numNodes % 2 === 1 || numNodes === 1; let nodeIndex = 0; if (hasCenterNode) { nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY }; nodeIndex++; } const remainingNodes = nodes.length - nodeIndex; const nodesOnArm = [ Math.ceil(remainingNodes / 4), Math.floor(remainingNodes / 4), Math.ceil(remainingNodes / 4), Math.floor(remainingNodes / 4) ]; while(nodesOnArm.reduce((a,b)=>a+b,0) > remainingNodes) { nodesOnArm[nodesOnArm.findIndex(c => c > 0)]--; } while(nodesOnArm.reduce((a,b)=>a+b,0) < remainingNodes) { nodesOnArm[nodesOnArm.findIndex(c => c >= 0)]++; } let armIndex = 0; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY - dist }; } armIndex++; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX + dist, y: centerY }; } armIndex++; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY + dist }; } armIndex++; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX - dist, y: centerY }; } }
+        function layoutNodesCShape(nodes, width, height) { console.log("Using C-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const side = Math.min(width - 2 * margin, height - 2 * margin); const halfSide = side / 2; const centerX = width / 2; const centerY = height / 2; const perimeter = side * 3; const spacing = numNodes > 1 ? perimeter / (numNodes -1) : perimeter; let currentDist = 0; nodes.forEach((node, index) => { let x, y; if (currentDist <= side) { x = centerX - halfSide + currentDist; y = centerY - halfSide; } else if (currentDist <= side * 2) { x = centerX - halfSide; y = centerY - halfSide + (currentDist - side); } else { x = centerX - halfSide + (currentDist - side * 2); y = centerY + halfSide; } const nodeSizeEstimate = 100; x = Math.max(nodeSizeEstimate / 2 + 5, Math.min(width - nodeSizeEstimate / 2 - 5, x)); y = Math.max(nodeSizeEstimate / 2 + 5, Math.min(height - nodeSizeEstimate / 2 - 5, y)); nodePositions[node.id] = { x, y }; currentDist += spacing; }); }
+        function layoutNodesHShape(nodes, width, height) { console.log("Using H-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const shapeHeight = height - 2 * margin; const shapeWidth = Math.min(width - 2 * margin, shapeHeight * 0.8); const halfWidth = shapeWidth / 2; const halfHeight = shapeHeight / 2; const centerX = width / 2; const centerY = height / 2; const nPerVertical = Math.floor(numNodes / 3); const nHorizontal = numNodes - 2 * nPerVertical; let nodeIndex = 0; for (let i = 0; i < nPerVertical; i++, nodeIndex++) { const y = centerY - halfHeight + (shapeHeight * (i + 0.5) / nPerVertical); nodePositions[nodes[nodeIndex].id] = { x: centerX - halfWidth, y: y }; } for (let i = 0; i < nPerVertical; i++, nodeIndex++) { const y = centerY - halfHeight + (shapeHeight * (i + 0.5) / nPerVertical); nodePositions[nodes[nodeIndex].id] = { x: centerX + halfWidth, y: y }; } const startOffset = (nHorizontal > 0 && nPerVertical > 0) ? 1 : 0; const endOffset = startOffset; const placeableWidth = shapeWidth * 2; for (let i = 0; i < nHorizontal; i++, nodeIndex++) { const x = centerX - halfWidth + (placeableWidth * (i + startOffset + 0.5) / (nHorizontal + startOffset + endOffset)); nodePositions[nodes[nodeIndex].id] = { x: x, y: centerY }; } }
+        function layoutNodesLShape(nodes, width, height) { console.log("Using L-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const shapeSize = Math.min(width - 2 * margin, height - 2 * margin); const halfSize = shapeSize / 2; const centerX = width / 2; const centerY = height / 2; const cornerX = centerX - halfSize; const cornerY = centerY - halfSize; const nHorizontal = Math.ceil(numNodes / 2); const nVertical = numNodes - nHorizontal; let nodeIndex = 0; for (let i = 0; i < nHorizontal; i++, nodeIndex++) { const x = cornerX + (shapeSize * (i + 0.5) / nHorizontal); nodePositions[nodes[nodeIndex].id] = { x: x, y: cornerY }; } for (let i = 0; i < nVertical; i++, nodeIndex++) { const y = cornerY + (shapeSize * (i + 1.5) / (nVertical + 1)); nodePositions[nodes[nodeIndex].id] = { x: cornerX, y: y }; } }
+
+
+        // --- Rendering Functions ---
+        function renderNodes(nodes, container) {
+            console.log("Rendering nodes...");
+            const nodeSizeData = {}; nodes.forEach(node => { if (node && node.id) { const isMajor = majorZoneKeywords.some(k => node.name.toLowerCase().includes(k.toLowerCase())); nodeSizeData[node.id] = { width: isMajor ? 160 : 100, height: isMajor ? 65 : 50 }; } });
+            nodes.forEach(node => { if (!node || !node.id || !nodePositions[node.id]) { console.warn(`Position/data missing for node ${node ? node.id : 'unknown'}. Skipping render.`); return; } const pos = nodePositions[node.id]; const zoneDiv = createZoneElement(node.name, node.type); const size = nodeSizeData[node.id] || { width: 100, height: 50 }; zoneDiv.dataset.width = size.width; zoneDiv.dataset.height = size.height; zoneDiv.style.left = `${pos.x}px`; zoneDiv.style.top = `${pos.y}px`; container.appendChild(zoneDiv); });
+            console.log("Node rendering finished.");
+        }
+        function renderEdges(edges, positions, svg, nodes) {
+            console.log("Rendering edges...");
+            let drawnCount = 0;
+            const nodeSizeData = {};
+            nodes.forEach(node => { if (node && node.id) { const isMajor = majorZoneKeywords.some(k => node.name.toLowerCase().includes(k.toLowerCase())); nodeSizeData[node.id] = { width: isMajor ? 160 : 100, height: isMajor ? 65 : 50 }; } });
+            edges.forEach(edge => {
+                if (!edge || !edge.source || !edge.target) return;
+                const sourcePos = positions[edge.source]; const targetPos = positions[edge.target];
+                const sourceSize = nodeSizeData[edge.source] || { width: 100, height: 50 };
+                const targetSize = nodeSizeData[edge.target] || { width: 100, height: 50 };
+                if (!sourcePos || !targetPos) { console.warn(`Skipping edge: Position missing for ${edge.source} or ${edge.target}`); return; }
+                const dx = targetPos.x - sourcePos.x; const dy = targetPos.y - sourcePos.y; const distance = Math.sqrt(dx * dx + dy * dy);
+                const fixedOffset = 30;
+                if (distance < fixedOffset * 1.5) { return; }
+                const nx = distance === 0 ? 0 : dx / distance; const ny = distance === 0 ? 0 : dy / distance;
+                const startX = sourcePos.x + nx * fixedOffset; const startY = sourcePos.y + ny * fixedOffset;
+                const endX = targetPos.x - nx * fixedOffset; const endY = targetPos.y - ny * fixedOffset;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', startX); line.setAttribute('y1', startY);
+                line.setAttribute('x2', endX); line.setAttribute('y2', endY);
+                const connectorClass = edge.type === 'vent' ? 'connector-vent' : 'connector-corridor';
+                line.setAttribute('class', `connector-line ${connectorClass}`);
+                svg.appendChild(line); drawnCount++;
+            });
+            console.log(`Rendered ${drawnCount} edges.`);
+        }
+
+
+        // --- Helper: Create Zone Div ---
+        function createZoneElement(zoneName, zoneType = '') {
+            const zoneDiv = document.createElement('div'); zoneDiv.classList.add('zone'); if (zoneType) { zoneDiv.classList.add(`zone-${zoneType}`); } zoneDiv.textContent = zoneName; return zoneDiv;
+        }
+
+        // --- Initial Display on Load ---
         window.onload = () => {
             console.log("Window loaded. Attempting initial map generation...");
             try {
-                if (generateButton) { // Ensure button exists before initial call
-                     generateMap();
-                } else {
-                    console.warn("Generate button not found on load, skipping initial generation.");
-                }
+                if (generateButton && typeof displayGeneratedGraphMap === 'function') {
+                     displayGeneratedGraphMap();
+                } else { console.warn("Generate button or display function not ready on load."); }
             } catch (error) {
                 console.error("Error during initial map generation (onload):", error);
-                 if(mapContainer) {
-                     mapContainer.innerHTML = `<p style="color: red; padding: 20px;">Error on initial load: ${error.message}. Try clicking 'Generate Map'.</p>`;
-                 }
+                 if(mapContainer) { mapContainer.innerHTML = `<p style="color: red; padding: 20px;">Error on initial load: ${error.message}. Try clicking 'Generate Map'.</p>`; }
             }
         };
 
@@ -436,3 +469,10 @@
 
 </body>
 </html>
+```
+
+**Summary of Fix:**
+
+1.  **Removed Duplicate `facilityData`:** The primary fix was removing the extra, incorrect declaration of the `facilityData` constant that was *still* present in the previous version.
+
+This should finally resolve the `SyntaxError` and allow the script to execute correctly, enabling the "Generate Graph Map" button. Please try this versi
