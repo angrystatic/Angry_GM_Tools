@@ -1,447 +1,408 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alien RPG Map Generator Prototype v4 (Data Fix)</title> <style>
-        /* --- Basic Body & Control Styles --- */
-        body {
-            font-family: 'Consolas', 'Courier New', monospace;
-            background-color: #1a1a1a;
-            color: #c0c0c0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-        h1 {
-            color: #4CAF50;
-            text-shadow: 0 0 5px #4CAF50;
-            margin-top: 0;
-            text-align: center;
-        }
-        .controls {
-            margin-bottom: 30px;
-            background-color: #2a2a2a;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            justify-content: center;
-        }
-        .controls > div { display: flex; align-items: center; gap: 5px; }
-        label { color: #a0a0a0; white-space: nowrap; }
-        select, button { padding: 8px 12px; background-color: #333; color: #c0c0c0; border: 1px solid #555; border-radius: 3px; font-family: inherit; cursor: pointer; }
-        button:hover { background-color: #444; border-color: #777; }
 
-        /* --- Map Container --- */
-        #map-container {
-            width: 85%;
-            max-width: 1000px;
-            min-height: 600px;
-            background-color: #0a0f0a;
-            border: 2px solid #3a5a3a;
-            position: relative; /* Crucial for positioning children */
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 15px;
-            margin-top: 20px;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
-            box-sizing: border-box;
-        }
+Credit to the original SVG points goes to Wikimedia Commons user Bron766
+https://commons.wikimedia.org/wiki/User:Bron766
+https://commons.wikimedia.org/wiki/File:Stdepflat_(ECG).svg
 
-        /* --- SVG Overlay for Connectors --- */
-        #connector-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            /* Width/Height set dynamically by JS to match content */
-            z-index: 1;
-            pointer-events: none;
-        }
+Original Not super realistic but easy to see
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475h26.949c2.296,0,12.876-10.182,20.063-10.182
+    c7.186,0,10.83,10.182,12.576,10.182h18.266l7.187,10.779l7.485-100.91l5.091,114.984l6.887-24.554h24.41
+    c3.239,0,14.816-16.769,20.206-16.769s11.08,16.47,13.475,16.47c2.845,0,26.665,0,26.665,0l27.757,0
+    c2.296,0,12.875-10.181,20.062-10.181c7.186,0,10.831,10.181,12.577,10.181h18.266l7.187,10.779l7.485-100.91l5.091,114.984
+    l6.888-24.555h24.41c3.24,0,14.817-16.768,20.207-16.768s11.079,16.469,13.474,16.469c2.845,0,26.666,0,26.666,0h27.813
+    c2.297,0,12.877-10.181,20.063-10.181s10.829,10.181,12.576,10.181h18.265l7.188,10.779l7.485-100.91l5.092,114.984l6.887-24.555
+    h24.409c3.238,0,14.816-16.768,20.206-16.768s11.08,16.469,13.476,16.469c2.845,0,26.664,0,26.664,0h27.815
+    c2.296,0,12.875-10.181,20.063-10.181c7.187,0,10.829,10.181,12.576,10.181h18.265l7.188,10.779l7.486-100.91l5.091,114.984 
+    l6.887-24.555h24.409c3.238,0,14.816-16.768,20.206-16.768s11.079,16.469,13.476,16.469c2.846,0,26.664,0,26.664,0" id="Totally Fake" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
-        /* --- Connector Line Styles --- */
-        .connector-line {
-            stroke-linecap: round;
-        }
-        .connector-corridor {
-            stroke: rgba(76, 175, 80, 0.6); /* Greenish corridor */
-            stroke-width: 4px;
-        }
-        .connector-vent {
-            stroke: rgba(100, 100, 150, 0.7); /* Bluish vent */
-            stroke-width: 2px;
-            stroke-dasharray: 5, 5; /* Dashed line for vents */
-        }
+Normal_P_wave
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475h26.949 c 0,0 2.72755005,-0.450487 11.45701005,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.30079,0.333268 1.87197,7.729765 8.24818,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 5.25649,-0.614697 12.0694,-1.342407 14.70142,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756445,0 11.932415,-0.296264 11.932415,-0.296264 c 0,0 2.72755005,-0.450487 11.45701005,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.30079,0.333268 1.87197,7.729765 8.24818,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 5.25649,-0.614697 12.0694,-1.342407 14.70142,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756445,0 11.932415,-0.296264 11.932415,-0.296264 c 0,0 2.72755005,-0.450487 11.45701005,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.30079,0.333268 1.87197,7.729765 8.24818,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 5.25649,-0.614697 12.0694,-1.342407 14.70142,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756445,0 11.932415,-0.296264 11.932415,-0.296264 c 0,0 2.72755005,-0.450487 11.45701005,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.30079,0.333268 1.87197,7.729765 8.24818,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 5.25649,-0.614697 12.0694,-1.342407 14.70142,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756445,0 11.932415,-0.296264 11.932415,-0.296264 c 0,0 2.72755005,-0.450487 11.45701005,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.30079,0.333268 1.87197,7.729765 8.24818,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 5.25649,-0.614697 12.0694,-1.342407 14.70142,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756445,0 11.932415,-0.296264 11.932415,-0.296264 c 0,0 2.72755005,-0.450487 11.45701005,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.30079,0.333268 1.87197,7.729765 8.24818,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 5.25649,-0.614697 12.0694,-1.342407 14.70142,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756445,0 11.932415,-0.296264 11.932415,-0.296264 c 0,0 2.72755005,-0.450487 11.45701005,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.30079,0.333268 1.87197,7.729765 8.24818,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 5.25649,-0.614697 12.0694,-1.342407 14.70142,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756445,0 11.932415,-0.296264 11.932415,-0.296264" id="Normal_P_wave" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
 
-        /* --- Zone Styling --- */
-        .zone {
-            position: absolute;
-            background-color: rgba(50, 70, 50, 0.7);
-            border: 1px solid #4CAF50;
-            color: #e0e0e0;
-            padding: 10px;
-            text-align: center;
-            width: 120px;
-            min-height: 50px;
-            height: auto;
-            border-radius: 3px;
-            font-size: 0.85em;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
-            transition: all 0.5s ease-out;
-            box-sizing: border-box;
-            transform: translate(-50%, -50%);
-            z-index: 2; /* Ensure zones are above SVG */
-            pointer-events: auto; /* Make zones interactive */
-        }
-        .zone-major { width: 160px; min-height: 65px; font-weight: bold; border-width: 2px; padding: 12px; z-index: 5; }
-        .zone-command { background-color: rgba(70, 90, 70, 0.8); border-color: #6acF70;}
-        .zone-medbay { background-color: rgba(50, 50, 90, 0.7); border-color: #6a6aff;}
-        .zone-engineering { background-color: rgba(90, 70, 50, 0.7); border-color: #ffaa6a;}
-        .zone-danger { border-color: #ff4444; color: #ffaaaa; background-color: rgba(90, 50, 50, 0.7); }
-
-        /* --- Legend Styles --- */
-        #legend {
-            background-color: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 5px;
-            padding: 10px 15px;
-            margin-top: 30px;
-            width: 85%;
-            max-width: 1000px;
-            box-sizing: border-box;
-        }
-        #legend h4 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: #a0a0a0;
-            text-align: center;
-        }
-        #legend ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-wrap: wrap; /* Allow items to wrap */
-            gap: 10px 20px; /* Row and column gap */
-            justify-content: center; /* Center items */
-        }
-        #legend li {
-            display: flex;
-            align-items: center;
-            gap: 8px; /* Space between symbol and text */
-            font-size: 0.9em;
-        }
-        .legend-box {
-            display: inline-block;
-            width: 20px;
-            height: 15px;
-            border: 1px solid #ccc; /* Base border */
-            vertical-align: middle;
-        }
-        .legend-line {
-            display: inline-block;
-            width: 25px;
-            height: 4px; /* Match corridor thickness */
-            border: none;
-            vertical-align: middle;
-        }
-        /* Style examples to match map elements */
-        .zone-normal-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; }
-        .zone-major-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; border-width: 2px; /* Simulate major look */ }
-        .zone-command-example { background-color: rgba(70, 90, 70, 0.8); border-color: #6acF70; }
-        .zone-medbay-example { background-color: rgba(50, 50, 90, 0.7); border-color: #6a6aff; }
-        .zone-engineering-example { background-color: rgba(90, 70, 50, 0.7); border-color: #ffaa6a; }
-        .zone-danger-example { background-color: rgba(90, 50, 50, 0.7); border-color: #ff4444; }
-        .connector-corridor-example { background-color: rgba(76, 175, 80, 0.6); height: 4px; }
-        .connector-vent-example {
-            height: 2px;
-            background: repeating-linear-gradient( /* Simulate dashed line */
-                90deg,
-                rgba(100, 100, 150, 0.7),
-                rgba(100, 100, 150, 0.7) 5px,
-                transparent 5px,
-                transparent 10px
-            );
-        }
-
-    </style>
-</head>
-<body>
-
-    <h1>Alien RPG Map Generator (Prototype v4)</h1> <div class="controls">
-        <div> <label for="facility-type">Type:</label> <select id="facility-type"> <option value="Colony">Colony</option> <option value="Station">Station</option> <option value="Ship">Ship</option> <option value="Outpost">Military/Science Outpost</option> <option value="Derelict">Derelict (Random Mix)</option> </select> </div>
-        <div> <label for="facility-size">Size:</label> <select id="facility-size"> <option value="Small">Small</option> <option value="Medium" selected>Medium</option> <option value="Large">Large</option> </select> </div>
-        <div> <label for="layout-style">Layout:</label> <select id="layout-style"> <option value="Grid">Grid</option> <option value="HubAndSpoke">Hub-and-Spoke</option> <option value="Linear">Linear</option> </select> </div>
-        <button id="generate-button">Generate Map</button>
-        </div>
-
-    <div id="map-container">
-        </div>
-
-    <div id="legend">
-        <h4>Legend</h4>
-        <ul>
-            <li><span class="legend-box zone-normal-example"></span> Normal Zone</li>
-            <li><span class="legend-box zone-major-example"></span> Major Zone</li>
-            <li><span class="legend-line connector-corridor-example"></span> Corridor</li>
-            <li><span class="legend-line connector-vent-example"></span> Vent / Duct</li>
-            <li><span class="legend-box zone-command-example"></span> Command/Ops</li>
-            <li><span class="legend-box zone-medbay-example"></span> Medical</li>
-            <li><span class="legend-box zone-engineering-example"></span> Engineering/Tech</li>
-            <li><span class="legend-box zone-danger-example"></span> Damaged/Hazard</li>
-        </ul>
-    </div>
 
 
-    <script>
-        // --- DOM Elements ---
-        let facilityTypeSelect, facilitySizeSelect, layoutStyleSelect, generateButton, mapContainer;
-        try {
-            facilityTypeSelect = document.getElementById('facility-type');
-            facilitySizeSelect = document.getElementById('facility-size');
-            layoutStyleSelect = document.getElementById('layout-style');
-            generateButton = document.getElementById('generate-button');
-            mapContainer = document.getElementById('map-container');
-
-            if (!facilityTypeSelect || !facilitySizeSelect || !layoutStyleSelect || !generateButton || !mapContainer) {
-                throw new Error("One or more essential HTML elements not found!");
-            }
-            console.log("DOM elements obtained successfully.");
-        } catch (error) {
-            console.error("FATAL ERROR getting DOM elements:", error);
-            const body = document.querySelector('body');
-            if (body) { body.innerHTML = `<p style="color:red; font-size: 1.2em; padding: 20px;">FATAL ERROR: Could not initialize page elements. ${error.message}</p>`; }
-        }
-
-
-        // --- Data Definitions (SINGLE, CORRECTED DEFINITION) ---
-        const coreZones = {
-             Colony: ['Command/Admin', 'Habitation Blocks', 'Medbay', 'Engineering (Power/Life Support)', 'Atmosphere Processing', 'Cargo/Industrial Zone', 'Security Post', 'Main Communications'],
-             Station: ['Command Center', 'Habitation Ring', 'Medbay', 'Engineering Core', 'Docking Bay(s)', 'Cargo Hold', 'Science Labs', 'Security Hub', 'Life Support Center'],
-             Ship: ['Bridge', 'Crew Quarters', 'Medbay', 'Engineering Deck', 'Cargo Bay', 'Cryosleep Chamber', 'Airlock Section', 'Primary Life Support'],
-             Outpost: ['Operations Center (Ops)', 'Barracks/Quarters', 'Small Infirmary', 'Generator Room', 'Armory/Storage', 'Perimeter Access Point', 'Comms Relay', 'Basic Life Support'],
-             Derelict: ['Damaged Bridge', 'Breached Habitation', 'Offline Engineering', 'Flooded Cargo Bay', 'Makeshift Medbay', 'Mysterious Lab', 'Compromised Airlock', 'Nest Area', 'Failing Life Support']
-        };
-        const optionalZones = {
-             Colony: ['Mining Control', 'Hydroponics', 'Vehicle Bay', 'Recreation Zone', 'Marketplace', 'Waste Recycling', 'Shuttle Pad', 'Large Mess Hall', 'Education Center', 'Maintenance Tunnels Access'],
-             Station: ['Customs/Security Checkpoint', 'Observation Deck', 'Zero-G Gym', 'Shuttle Bay', 'Long-Range Comms', 'Waste Disposal', 'Manufacturing Area', 'Trade Hub Market', 'Bar/Cantina', 'Ventilation Hub'],
-             Ship: ['Science Scanner Room', 'Observation Pod', 'Shuttle Bay', 'Probe Launch Tube', 'Brig', 'Vehicle Bay (Large Ship)', 'Auxiliary Control', 'Ships Mess', 'Small Rec Room', 'Service Ducts Access'],
-             Outpost: ['Vehicle Maintenance Bay', 'Small Lab', 'Holding Cells', 'Watchtower', 'Underground Access', 'Landing Zone', 'Basic Mess Area', 'Perimeter Vents'],
-             Derelict: ['Ancient Ruins Section', 'Fungal Garden', 'Trapped Shuttle', 'Wreckage Field Access', 'Hidden Stash', 'Queen Chamber', 'Barricaded Area', 'Makeshift Shrine', 'Collapsed Tunnel']
-        };
-        const majorZoneKeywords = ['Habitation', 'Command', 'Bridge', 'Engineering', 'Cargo', 'Docking', 'Ops', 'Industrial', 'Ring', 'Deck', 'Blocks', 'Center', 'Core', 'Bay(s)'];
-        const habitationKeywords = ['Habitation', 'Quarters', 'Barracks', 'Ring', 'Cryosleep'];
-        const amenityKeywords = ['Mess Hall', 'Mess Area', 'Canteen', 'Recreation', 'Marketplace', 'Gym', 'Bar', 'Cantina', 'Observation Deck', 'Chapel', 'Shrine', 'Education Center', 'Rec Room', 'Trade Hub'];
-        const criticalFunctionKeywords = ['Command', 'Bridge', 'Ops', 'Engineering', 'Power', 'Generator', 'Life Support', 'Atmosphere', 'Comms', 'Communications'];
-        const technicalKeywords = ['Engineering', 'Generator', 'Power', 'Life Support', 'Atmosphere', 'Maintenance', 'Worksh', 'Lab', 'Scanner', 'Server', 'Comms', 'Technical', 'Ventilation'];
-        const securityKeywords = ['Security', 'Armory', 'Brig', 'Checkpoint', 'Holding Cells'];
-
-        // --- Global Array to Store Placed Zone Data ---
-        let placedZoneData = [];
-
-        // --- Event Listeners ---
-        if (generateButton) {
-            generateButton.addEventListener('click', generateMap);
-        }
-        // Removed listener for exportButton
-
-        // --- Helper Functions for Zone Adjustment ---
-        function containsZoneType(zoneList, keywords) { return zoneList.some(zone => keywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase()))); }
-        function findZoneByType(zoneList, keywords) { return zoneList.find(zone => keywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase()))); }
-        function getRandomNewZoneOfType(targetList, zonePool, keywords) { const available = zonePool.filter(zone => !targetList.includes(zone) && keywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase())) ); if (available.length === 0) return null; return available[Math.floor(Math.random() * available.length)]; }
-        function getRandomNewZoneNotOfType(targetList, zonePool, keywordsToAvoid) { const available = zonePool.filter(zone => !targetList.includes(zone) && !keywordsToAvoid.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase())) ); if (available.length === 0) { const fallbackPool = zonePool.filter(zone => !targetList.includes(zone)); return fallbackPool.length > 0 ? fallbackPool[Math.floor(Math.random() * fallbackPool.length)] : null; } return available[Math.floor(Math.random() * available.length)]; }
-
-        // --- Zone Adjustment Logic ---
-        function adjustZonesForSizeAndType(initialZones, baseZonePool, optionalZonePool, size, type) {
-             console.log("Adjusting zones. Initial:", initialZones);
-            let adjustedZones = [...initialZones]; const allZonePool = [...new Set([...baseZonePool, ...optionalZonePool])];
-            if (!containsZoneType(adjustedZones, habitationKeywords)) { const newHab = getRandomNewZoneOfType(adjustedZones, allZonePool, habitationKeywords); if (newHab) { console.log(`Adding Habitation: ${newHab}`); adjustedZones.push(newHab); } else { console.error(`CRITICAL - Could not find Habitation zone!`); } }
-            let amenityCount = adjustedZones.filter(zone => amenityKeywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase()))).length; const luxuryAmenities = ['Marketplace', 'Zero-G Gym', 'Observation Deck', 'Trade Hub', 'Bar/Cantina', 'Cinema', 'Education Center'];
-            if (size === 'Small') { const maxAmenities = (type === 'Station' || type === 'Colony') ? 1 : 0; let removedCount = 0; while(amenityCount > maxAmenities && removedCount < 5) { let removed = false; const luxIdx = adjustedZones.findIndex(zone => luxuryAmenities.some(lux => zone.toLowerCase().includes(lux.toLowerCase()))); if(luxIdx !== -1) { console.log(`Small: Removing luxury amenity: ${adjustedZones[luxIdx]}`); adjustedZones.splice(luxIdx, 1); amenityCount--; removed = true; } else { const otherAmenityIdx = adjustedZones.findIndex(zone => amenityKeywords.some(keyword => zone.toLowerCase().includes(keyword.toLowerCase())) && !zone.toLowerCase().includes("mess")); if(otherAmenityIdx !== -1) { console.log(`Small: Removing excess amenity: ${adjustedZones[otherAmenityIdx]}`); adjustedZones.splice(otherAmenityIdx, 1); amenityCount--; removed = true; } } if(!removed) break; removedCount++; } }
-            else if (size === 'Medium' && amenityCount === 0) { const newAmenity = getRandomNewZoneOfType(adjustedZones, optionalZonePool, amenityKeywords); if (newAmenity) { console.log(`Medium: Adding amenity: ${newAmenity}`); adjustedZones.push(newAmenity); amenityCount++; } else { console.warn("Medium: Could not find amenity zone."); } }
-            else if (size === 'Large') { const targetAmenities = (type === 'Colony' || type === 'Station') ? 3 : 2; let addedCount = 0; while (amenityCount < targetAmenities && addedCount < 3) { const newAmenity = getRandomNewZoneOfType(adjustedZones, optionalZonePool, amenityKeywords); if (newAmenity) { console.log(`Large: Adding amenity: ${newAmenity}`); adjustedZones.push(newAmenity); amenityCount++; addedCount++; } else { console.warn("Large: Could not find more amenities."); break; } } }
-            const criticalChecks = { 'Command': ['Command', 'Bridge', 'Ops'], 'Engineering': ['Engineering', 'Power', 'Generator'], 'Life Support': ['Life Support', 'Atmosphere'] };
-            for(const funcName in criticalChecks) { if (!containsZoneType(adjustedZones, criticalChecks[funcName])) { const newCritical = getRandomNewZoneOfType(adjustedZones, baseZonePool, criticalChecks[funcName]) || getRandomNewZoneOfType(adjustedZones, allZonePool, criticalChecks[funcName]); if(newCritical) { console.warn(`Adding missing critical ${funcName}: ${newCritical}`); adjustedZones.push(newCritical); } else { console.error(`CRITICAL FAILURE: Could not find ${funcName}-type zone!`); } } }
-            const finalUniqueZones = [...new Set(adjustedZones)]; console.log("Adjustment complete. Final zones:", finalUniqueZones); return finalUniqueZones;
-        }
-
-        // --- Main Generation Function ---
-        function generateMap() {
-            console.log("--- generateMap START ---");
-            if (!mapContainer) { console.error("generateMap cannot run: mapContainer not found."); return; }
-            try {
-                const type = facilityTypeSelect.value; const size = facilitySizeSelect.value; const layoutStyle = layoutStyleSelect.value;
-                mapContainer.innerHTML = '';
-                const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svgElement.setAttribute('id', 'connector-svg'); mapContainer.appendChild(svgElement);
-                placedZoneData = [];
-                console.log(`Generating map for Type: ${type}, Size: ${size}, Layout: ${layoutStyle}`);
-                let effectiveType = type; if (!coreZones[effectiveType] || !optionalZones[effectiveType]) { effectiveType = 'Derelict'; }
-                const baseZonePool = coreZones[effectiveType] ? [...coreZones[effectiveType]] : []; const optionalZonePool = optionalZones[effectiveType] ? [...optionalZones[effectiveType]] : [];
-                let numCoreTarget, numOptionalTarget; switch (size) { case 'Small': numCoreTarget = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 2); numOptionalTarget = Math.min(optionalZonePool.length, Math.floor(Math.random() * 2) + 1); break; case 'Large': numCoreTarget = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 4); numOptionalTarget = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 3); break; case 'Medium': default: numCoreTarget = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 3); numOptionalTarget = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 2); break; }
-                console.log(`Target counts - Core: ${numCoreTarget}, Optional: ${numOptionalTarget}`);
-                let initialSelectedZones = selectRandomElements(baseZonePool, numCoreTarget); initialSelectedZones = initialSelectedZones.concat(selectRandomElements(optionalZonePool, numOptionalTarget));
-                let finalSelectedZones = adjustZonesForSizeAndType( initialSelectedZones, baseZonePool, optionalZonePool, size, effectiveType );
-                if (finalSelectedZones.length === 0) { console.warn("No zones selected."); mapContainer.innerHTML = '<p style="color: yellow; padding: 20px;">No zones generated.</p>'; return; }
-                const containerWidth = mapContainer.offsetWidth; const containerHeight = mapContainer.offsetHeight; console.log("Container dimensions:", containerWidth, containerHeight);
-                if (containerWidth <= 0 || containerHeight <= 0) { console.error("Container size issue."); mapContainer.innerHTML = '<p style="color: red; padding: 20px;">Error: Container size issue.</p>'; return; }
-                const layoutOptions = { size: size };
-                console.log(`Calling layout function: ${layoutStyle}`);
-                switch (layoutStyle) { case 'HubAndSpoke': layoutHubAndSpoke(finalSelectedZones, containerWidth, containerHeight, layoutOptions); break; case 'Linear': layoutLinear(finalSelectedZones, containerWidth, containerHeight, layoutOptions); break; case 'Grid': default: layoutGrid(finalSelectedZones, containerWidth, containerHeight, layoutOptions); break; }
-                 console.log("Layout complete. Placed zones data length:", placedZoneData.length);
-                if (placedZoneData.length > 0) { console.log("Appending zone elements to DOM..."); placedZoneData.forEach(zoneInfo => { if (zoneInfo && zoneInfo.element instanceof Node) { mapContainer.appendChild(zoneInfo.element); } else { console.error("Invalid element found in placedZoneData for:", zoneInfo ? zoneInfo.name : 'unknown'); } }); } else { console.warn("No zone data populated."); }
-                 console.log("Calling drawConnections..."); drawConnections(placedZoneData, layoutStyle, svgElement);
-                console.log("--- generateMap END ---");
-            } catch (error) { console.error("!!! Error during map generation:", error); mapContainer.innerHTML = `<p style="color: red; padding: 20px;">An error occurred: ${error.message}. Check console (F12).</p>`; }
-        }
-
-        // --- Helper: Create Zone Div ---
-        function createZoneElement(zoneName) {
-            const zoneDiv = document.createElement('div'); zoneDiv.classList.add('zone'); zoneDiv.textContent = zoneName;
-            const lowerZoneName = zoneName.toLowerCase(); if (majorZoneKeywords.some(keyword => lowerZoneName.includes(keyword.toLowerCase()))) { zoneDiv.classList.add('zone-major'); }
-            if (lowerZoneName.includes('command') || lowerZoneName.includes('bridge') || lowerZoneName.includes('ops')) { zoneDiv.classList.add('zone-command'); } else if (lowerZoneName.includes('medbay') || lowerZoneName.includes('infirmary')) { zoneDiv.classList.add('zone-medbay'); } else if (lowerZoneName.includes('engineering') || lowerZoneName.includes('generator') || lowerZoneName.includes('power')) { zoneDiv.classList.add('zone-engineering'); } else if (lowerZoneName.includes('damaged') || lowerZoneName.includes('breached') || lowerZoneName.includes('nest') || lowerZoneName.includes('offline') || lowerZoneName.includes('flooded') || lowerZoneName.includes('compromised')) { zoneDiv.classList.add('zone-danger'); } return zoneDiv;
-        }
-
-        // --- Layout Algorithms (Populate placedZoneData) ---
-        function layoutGrid(zones, containerWidth, containerHeight, options) {
-            console.log("layoutGrid running...");
-            const sizeFactor = options.size === 'Large' ? 1.05 : (options.size === 'Small' ? 0.95 : 1.0);
-            const numZones = zones.length; if (numZones === 0) return;
-            let cols = Math.ceil(Math.sqrt(numZones * (containerWidth / containerHeight)));
-            if (numZones <= 4) cols = Math.min(numZones, 2); else if (numZones <= 6) cols = 3; else if (numZones <= 9) cols = 3; else cols = Math.max(3, Math.ceil(numZones / 3));
-            const rows = Math.ceil(numZones / cols);
-            const cellWidth = (containerWidth / cols); const cellHeight = (containerHeight / rows);
-            const paddingX = cellWidth * 0.15 * sizeFactor; const paddingY = cellHeight * 0.15 * sizeFactor;
-            const jitter = 0.15;
-            zones.forEach((zoneName, index) => {
-                const zoneDiv = createZoneElement(zoneName); const isMajor = zoneDiv.classList.contains('zone-major');
-                const elementWidth = isMajor ? 160 : 120; const elementHeight = isMajor ? 65 : 50;
-                const gridRow = Math.floor(index / cols); const gridCol = index % cols;
-                const targetX = (gridCol * cellWidth) + (cellWidth / 2) + (Math.random() - 0.5) * cellWidth * jitter;
-                const targetY = (gridRow * cellHeight) + (cellHeight / 2) + (Math.random() - 0.5) * cellHeight * jitter;
-                const finalX = Math.max(elementWidth / 2 + paddingX / 2, Math.min(containerWidth - elementWidth / 2 - paddingX / 2, targetX));
-                const finalY = Math.max(elementHeight / 2 + paddingY / 2, Math.min(containerHeight - elementHeight / 2 - 15, targetY));
-                zoneDiv.style.left = `${finalX}px`; zoneDiv.style.top = `${finalY}px`;
-                placedZoneData.push({ name: zoneName, element: zoneDiv, x: finalX, y: finalY, row: gridRow, col: gridCol });
-            });
-            console.log("layoutGrid finished.");
-        }
-        function layoutHubAndSpoke(zones, containerWidth, containerHeight, options) {
-            console.log("layoutHubAndSpoke running...");
-             const sizeFactor = options.size === 'Large' ? 1.15 : (options.size === 'Small' ? 0.85 : 1.0);
-             const numZones = zones.length; if (numZones === 0) return;
-             const centerX = containerWidth / 2; const centerY = containerHeight / 2;
-             let centralZoneIndex = zones.findIndex(name => /command|bridge|ops|hub|core/i.test(name));
-             if (centralZoneIndex === -1 || centralZoneIndex >= zones.length) centralZoneIndex = 0;
-             const centralZoneName = zones[centralZoneIndex]; const spokeZones = zones.filter((_, index) => index !== centralZoneIndex); const numSpokes = spokeZones.length;
-             const centralDiv = createZoneElement(centralZoneName); const centralIsMajor = centralDiv.classList.contains('zone-major');
-             const centralElementWidth = centralIsMajor ? 160 : 120; const centralElementHeight = centralIsMajor ? 65 : 50;
-             const centralX = Math.max(centralElementWidth / 2, Math.min(containerWidth - centralElementWidth / 2, centerX));
-             const centralY = Math.max(centralElementHeight / 2, Math.min(containerHeight - centralElementHeight / 2 - 15, centerY));
-             centralDiv.style.left = `${centralX}px`; centralDiv.style.top = `${centralY}px`; centralDiv.style.zIndex = '10';
-             const centralData = { name: centralZoneName, element: centralDiv, x: centralX, y: centralY, isHub: true };
-             placedZoneData.push(centralData);
-             if (numSpokes > 0) {
-                 const baseRadius = Math.min(containerWidth, containerHeight) * 0.32 * sizeFactor; const radiusVariation = 0.1 * sizeFactor;
-                 spokeZones.forEach((zoneName, index) => {
-                     const spokeDiv = createZoneElement(zoneName); const isMajor = spokeDiv.classList.contains('zone-major');
-                     const elementWidth = isMajor ? 160 : 120; const elementHeight = isMajor ? 65 : 50;
-                     const angle = (index / numSpokes) * 2 * Math.PI; const radius = baseRadius * (1 + (Math.random() - 0.5) * 2 * radiusVariation);
-                     const targetX = centerX + radius * Math.cos(angle); const targetY = centerY + radius * Math.sin(angle);
-                     const finalX = Math.max(elementWidth / 2, Math.min(containerWidth - elementWidth / 2, targetX));
-                     const finalY = Math.max(elementHeight / 2, Math.min(containerHeight - elementHeight / 2 - 15, targetY));
-                     spokeDiv.style.left = `${finalX}px`; spokeDiv.style.top = `${finalY}px`;
-                     placedZoneData.push({ name: zoneName, element: spokeDiv, x: finalX, y: finalY, isHub: false, hubRef: centralData });
-                 });
-             }
-             console.log("layoutHubAndSpoke finished.");
-        }
-        function layoutLinear(zones, containerWidth, containerHeight, options) {
-            console.log("layoutLinear running...");
-             const sizeFactor = options.size === 'Large' ? 0.9 : (options.size === 'Small' ? 1.05 : 1.0);
-             const numZones = zones.length; if (numZones === 0) return;
-             let requiredWidth = 0; const paddingBase = 30;
-             zones.forEach(zoneName => { const isMajor = majorZoneKeywords.some(keyword => zoneName.toLowerCase().includes(keyword.toLowerCase())); requiredWidth += isMajor ? 160 : 120; });
-             requiredWidth += Math.max(0, numZones - 1) * paddingBase * sizeFactor;
-             const minPadding = 20; let currentX;
-             if (requiredWidth < containerWidth - (2 * minPadding)) { currentX = (containerWidth - requiredWidth) / 2; }
-             else { console.warn("Linear layout content may exceed container width."); currentX = minPadding; }
-             const verticalCenter = containerHeight / 2; const verticalJitter = containerHeight * 0.1;
-             zones.forEach((zoneName, index) => {
-                 const zoneDiv = createZoneElement(zoneName); const isMajor = zoneDiv.classList.contains('zone-major');
-                 const elementWidth = isMajor ? 160 : 120; const elementHeight = isMajor ? 65 : 50;
-                 const targetX = currentX + elementWidth / 2; currentX += elementWidth + (paddingBase * sizeFactor);
-                 const targetY = verticalCenter + (Math.random() - 0.5) * verticalJitter;
-                 const finalY = Math.max(elementHeight / 2, Math.min(containerHeight - elementHeight / 2 - 15, targetY));
-                 zoneDiv.style.left = `${targetX}px`; zoneDiv.style.top = `${finalY}px`;
-                 placedZoneData.push({ name: zoneName, element: zoneDiv, x: targetX, y: finalY, index: index });
-             });
-             console.log("layoutLinear finished.");
-        }
+Flatline
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17,100 H750" id="Flatline" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
 
-        // --- Helper: Select Random Elements ---
-        function selectRandomElements(arr, count) { if (!arr || arr.length === 0) return []; if (count <= 0) return []; if (count >= arr.length) { let fullShuffled = [...arr]; for (let i = fullShuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [fullShuffled[i], fullShuffled[j]] = [fullShuffled[j], fullShuffled[i]]; } return fullShuffled; } let shuffled = [...arr]; for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; } return shuffled.slice(0, count); }
+Absent_P_waves
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+<path d="m 17.902,114.475 c 0,0 -3.63300775,-0.245308 5.09645225,-0.245308 1.3103525,0 2.5392745,-1.129572 4.4309118,-1.690236 0.842466,-0.2497 2.804554,1.90973 3.482899,1.723208 0.678344,-0.186522 1.065232,-1.85573 1.863118,-1.465929 2.318817,1.132843 1.998738,-0.118591 2.267538,-0.09776 0.268799,0.02083 1.629198,0.601711 2.30315,0.827199 0.673952,0.225488 0.661456,0.09558 1.467335,0.33627 0.805878,0.240688 2.974889,-1.189409 4.109868,-1.086528 1.134979,0.10288 2.056643,1.123199 3.650695,0.930057 3.73323,-0.452333 4.349203,1.491832 4.349203,1.491832 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 0.657061,-0.07684 2.159159,-1.386516 2.853652,-1.465762 0.694494,-0.07925 0.581384,1.07194 1.290899,0.992531 0.709515,-0.07941 2.446833,0.867556 3.148958,0.790228 0.702124,-0.07733 0.369054,-1.178951 1.041377,-1.251952 0.672323,-0.073 2.144859,-0.758815 2.764969,-0.825244 0.62011,-0.06643 0.387793,0.486528 0.933279,0.428917 0.545485,-0.05761 0.637697,0.915644 1.086146,0.869096 0.44845,-0.04655 1.253137,-1.1129 1.58214,-1.14614 0.329002,-0.03324 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 1.219556,0 2.981067,-1.873559 3.108709,-0.01273 0.09956,1.451471 2.443427,-0.695142 2.871731,-0.03356 0.787999,1.217186 2.50456,0.175089 3.108445,0.157729 0.60389,-0.01736 0.38917,0.156568 0.53599,-0.259569 0.44089,-1.249596 0.80555,-0.03703 1.10455,-0.05439 0.299,-0.01736 0.53233,-0.03356 0.71055,-0.04745 0.17822,-0.01389 0.30133,-0.02546 0.37989,-0.03356 0.0785,-0.0081 0.11255,-0.01273 0.11255,-0.01273 c 0,0 -3.63300775,-0.245308 5.09645225,-0.245308 1.3103525,0 2.5392745,-1.129572 4.4309118,-1.690236 0.842466,-0.2497 2.804554,1.90973 3.482899,1.723208 0.678344,-0.186522 1.065232,-1.85573 1.863118,-1.465929 2.318817,1.132843 1.998738,-0.118591 2.267538,-0.09776 0.268799,0.02083 1.629198,0.601711 2.30315,0.827199 0.673952,0.225488 0.661456,0.09558 1.467335,0.33627 0.805878,0.240688 2.974889,-1.189409 4.109868,-1.086528 1.134979,0.10288 2.056643,1.123199 3.650695,0.930057 3.73323,-0.452333 4.349203,1.491832 4.349203,1.491832 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 0.657061,-0.07684 2.159159,-1.386516 2.853652,-1.465762 0.694494,-0.07925 0.581384,1.07194 1.290899,0.992531 0.709515,-0.07941 2.446833,0.867556 3.148958,0.790228 0.702124,-0.07733 0.369054,-1.178951 1.041377,-1.251952 0.672323,-0.073 2.144859,-0.758815 2.764969,-0.825244 0.62011,-0.06643 0.387793,0.486528 0.933279,0.428917 0.545485,-0.05761 0.637697,0.915644 1.086146,0.869096 0.44845,-0.04655 1.253137,-1.1129 1.58214,-1.14614 0.329002,-0.03324 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 1.219556,0 2.981067,-1.873559 3.108709,-0.01273 0.09956,1.451471 2.443427,-0.695142 2.871731,-0.03356 0.787999,1.217186 2.50456,0.175089 3.108445,0.157729 0.60389,-0.01736 0.38917,0.156568 0.53599,-0.259569 0.44089,-1.249596 0.80555,-0.03703 1.10455,-0.05439 0.299,-0.01736 0.53233,-0.03356 0.71055,-0.04745 0.17822,-0.01389 0.30133,-0.02546 0.37989,-0.03356 0.0785,-0.0081 0.11255,-0.01273 0.11255,-0.01273 c 0,0 -3.63300775,-0.245308 5.09645225,-0.245308 1.3103525,0 2.5392745,-1.129572 4.4309118,-1.690236 0.842466,-0.2497 2.804554,1.90973 3.482899,1.723208 0.678344,-0.186522 1.065232,-1.85573 1.863118,-1.465929 2.318817,1.132843 1.998738,-0.118591 2.267538,-0.09776 0.268799,0.02083 1.629198,0.601711 2.30315,0.827199 0.673952,0.225488 0.661456,0.09558 1.467335,0.33627 0.805878,0.240688 2.974889,-1.189409 4.109868,-1.086528 1.134979,0.10288 2.056643,1.123199 3.650695,0.930057 3.73323,-0.452333 4.349203,1.491832 4.349203,1.491832 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 0.657061,-0.07684 2.159159,-1.386516 2.853652,-1.465762 0.694494,-0.07925 0.581384,1.07194 1.290899,0.992531 0.709515,-0.07941 2.446833,0.867556 3.148958,0.790228 0.702124,-0.07733 0.369054,-1.178951 1.041377,-1.251952 0.672323,-0.073 2.144859,-0.758815 2.764969,-0.825244 0.62011,-0.06643 0.387793,0.486528 0.933279,0.428917 0.545485,-0.05761 0.637697,0.915644 1.086146,0.869096 0.44845,-0.04655 1.253137,-1.1129 1.58214,-1.14614 0.329002,-0.03324 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 1.219556,0 2.981067,-1.873559 3.108709,-0.01273 0.09956,1.451471 2.443427,-0.695142 2.871731,-0.03356 0.787999,1.217186 2.50456,0.175089 3.108445,0.157729 0.60389,-0.01736 0.38917,0.156568 0.53599,-0.259569 0.44089,-1.249596 0.80555,-0.03703 1.10455,-0.05439 0.299,-0.01736 0.53233,-0.03356 0.71055,-0.04745 0.17822,-0.01389 0.30133,-0.02546 0.37989,-0.03356 0.0785,-0.0081 0.11255,-0.01273 0.11255,-0.01273 c 0,0 -3.63300775,-0.245308 5.09645225,-0.245308 1.3103525,0 2.5392745,-1.129572 4.4309118,-1.690236 0.842466,-0.2497 2.804554,1.90973 3.482899,1.723208 0.678344,-0.186522 1.065232,-1.85573 1.863118,-1.465929 2.318817,1.132843 1.998738,-0.118591 2.267538,-0.09776 0.268799,0.02083 1.629198,0.601711 2.30315,0.827199 0.673952,0.225488 0.661456,0.09558 1.467335,0.33627 0.805878,0.240688 2.974889,-1.189409 4.109868,-1.086528 1.134979,0.10288 2.056643,1.123199 3.650695,0.930057 3.73323,-0.452333 4.349203,1.491832 4.349203,1.491832 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 0.657061,-0.07684 2.159159,-1.386516 2.853652,-1.465762 0.694494,-0.07925 0.581384,1.07194 1.290899,0.992531 0.709515,-0.07941 2.446833,0.867556 3.148958,0.790228 0.702124,-0.07733 0.369054,-1.178951 1.041377,-1.251952 0.672323,-0.073 2.144859,-0.758815 2.764969,-0.825244 0.62011,-0.06643 0.387793,0.486528 0.933279,0.428917 0.545485,-0.05761 0.637697,0.915644 1.086146,0.869096 0.44845,-0.04655 1.253137,-1.1129 1.58214,-1.14614 0.329002,-0.03324 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 1.219556,0 2.981067,-1.873559 3.108709,-0.01273 0.09956,1.451471 2.443427,-0.695142 2.871731,-0.03356 0.787999,1.217186 2.50456,0.175089 3.108445,0.157729 0.60389,-0.01736 0.38917,0.156568 0.53599,-0.259569 0.44089,-1.249596 0.80555,-0.03703 1.10455,-0.05439 0.299,-0.01736 0.53233,-0.03356 0.71055,-0.04745 0.17822,-0.01389 0.30133,-0.02546 0.37989,-0.03356 0.0785,-0.0081 0.11255,-0.01273 0.11255,-0.01273 c 0,0 -3.63300775,-0.245308 5.09645225,-0.245308 1.3103525,0 2.5392745,-1.129572 4.4309118,-1.690236 0.842466,-0.2497 2.804554,1.90973 3.482899,1.723208 0.678344,-0.186522 1.065232,-1.85573 1.863118,-1.465929 2.318817,1.132843 1.998738,-0.118591 2.267538,-0.09776 0.268799,0.02083 1.629198,0.601711 2.30315,0.827199 0.673952,0.225488 0.661456,0.09558 1.467335,0.33627 0.805878,0.240688 2.974889,-1.189409 4.109868,-1.086528 1.134979,0.10288 2.056643,1.123199 3.650695,0.930057 3.73323,-0.452333 4.349203,1.491832 4.349203,1.491832 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 0.657061,-0.07684 2.159159,-1.386516 2.853652,-1.465762 0.694494,-0.07925 0.581384,1.07194 1.290899,0.992531 0.709515,-0.07941 2.446833,0.867556 3.148958,0.790228 0.702124,-0.07733 0.369054,-1.178951 1.041377,-1.251952 0.672323,-0.073 2.144859,-0.758815 2.764969,-0.825244 0.62011,-0.06643 0.387793,0.486528 0.933279,0.428917 0.545485,-0.05761 0.637697,0.915644 1.086146,0.869096 0.44845,-0.04655 1.253137,-1.1129 1.58214,-1.14614 0.329002,-0.03324 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 1.219556,0 2.981067,-1.873559 3.108709,-0.01273 0.09956,1.451471 2.443427,-0.695142 2.871731,-0.03356 0.787999,1.217186 2.50456,0.175089 3.108445,0.157729 0.60389,-0.01736 0.38917,0.156568 0.53599,-0.259569 0.44089,-1.249596 0.80555,-0.03703 1.10455,-0.05439 0.299,-0.01736 0.53233,-0.03356 0.71055,-0.04745 0.17822,-0.01389 0.30133,-0.02546 0.37989,-0.03356 0.0785,-0.0081 0.11255,-0.01273 0.11255,-0.01273 c 0,0 -3.63300775,-0.245308 5.09645225,-0.245308 1.3103525,0 2.5392745,-1.129572 4.4309118,-1.690236 0.842466,-0.2497 2.804554,1.90973 3.482899,1.723208 0.678344,-0.186522 1.065232,-1.85573 1.863118,-1.465929 2.318817,1.132843 1.998738,-0.118591 2.267538,-0.09776 0.268799,0.02083 1.629198,0.601711 2.30315,0.827199 0.673952,0.225488 0.661456,0.09558 1.467335,0.33627 0.805878,0.240688 2.974889,-1.189409 4.109868,-1.086528 1.134979,0.10288 2.056643,1.123199 3.650695,0.930057 3.73323,-0.452333 4.349203,1.491832 4.349203,1.491832 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 0.657061,-0.07684 2.159159,-1.386516 2.853652,-1.465762 0.694494,-0.07925 0.581384,1.07194 1.290899,0.992531 0.709515,-0.07941 2.446833,0.867556 3.148958,0.790228 0.702124,-0.07733 0.369054,-1.178951 1.041377,-1.251952 0.672323,-0.073 2.144859,-0.758815 2.764969,-0.825244 0.62011,-0.06643 0.387793,0.486528 0.933279,0.428917 0.545485,-0.05761 0.637697,0.915644 1.086146,0.869096 0.44845,-0.04655 1.253137,-1.1129 1.58214,-1.14614 0.329002,-0.03324 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 1.219556,0 2.981067,-1.873559 3.108709,-0.01273 0.09956,1.451471 2.443427,-0.695142 2.871731,-0.03356 0.787999,1.217186 2.50456,0.175089 3.108445,0.157729 0.60389,-0.01736 0.38917,0.156568 0.53599,-0.259569 0.44089,-1.249596 0.80555,-0.03703 1.10455,-0.05439 0.299,-0.01736 0.53233,-0.03356 0.71055,-0.04745 0.17822,-0.01389 0.30133,-0.02546 0.37989,-0.03356 0.0785,-0.0081 0.11255,-0.01273 0.11255,-0.01273 c 0,0 -3.63300775,-0.245308 5.09645225,-0.245308 1.3103525,0 2.5392745,-1.129572 4.4309118,-1.690236 0.842466,-0.2497 2.804554,1.90973 3.482899,1.723208 0.678344,-0.186522 1.065232,-1.85573 1.863118,-1.465929 2.318817,1.132843 1.998738,-0.118591 2.267538,-0.09776 0.268799,0.02083 1.629198,0.601711 2.30315,0.827199 0.673952,0.225488 0.661456,0.09558 1.467335,0.33627 0.805878,0.240688 2.974889,-1.189409 4.109868,-1.086528 1.134979,0.10288 2.056643,1.123199 3.650695,0.930057 3.73323,-0.452333 4.349203,1.491832 4.349203,1.491832 l 2.62979,4.830481 3.89683,-66.0014085 1.2336,95.8278605 c 0,0 1.01182,-34.126518 3.66897,-34.407028 0.657061,-0.07684 2.159159,-1.386516 2.853652,-1.465762 0.694494,-0.07925 0.581384,1.07194 1.290899,0.992531 0.709515,-0.07941 2.446833,0.867556 3.148958,0.790228 0.702124,-0.07733 0.369054,-1.178951 1.041377,-1.251952 0.672323,-0.073 2.144859,-0.758815 2.764969,-0.825244 0.62011,-0.06643 0.387793,0.486528 0.933279,0.428917 0.545485,-0.05761 0.637697,0.915644 1.086146,0.869096 0.44845,-0.04655 1.253137,-1.1129 1.58214,-1.14614 0.329002,-0.03324 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 1.219556,0 2.981067,-1.873559 3.108709,-0.01273 0.09956,1.451471 2.443427,-0.695142 2.871731,-0.03356 0.787999,1.217186 2.50456,0.175089 3.108445,0.157729 0.60389,-0.01736 0.38917,0.156568 0.53599,-0.259569 0.44089,-1.249596 0.80555,-0.03703 1.10455,-0.05439 0.299,-0.01736 0.53233,-0.03356 0.71055,-0.04745 0.17822,-0.01389 0.30133,-0.02546 0.37989,-0.03356 0.0785,-0.0081 0.11255,-0.01273 0.11255,-0.01273" id="Absent_P_waves" fill="none" stroke="green" stroke-width="2">
+<animate attributeName="stroke-dashoffset" dur="5s" from="2000" repeatCount="indefinite" to="0"/>
+</path>
+<style>path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }</style>
+</svg>
 
-        // --- Draw Connections Function ---
-        function drawConnections(zoneData, layoutStyle, svgElement) {
-            console.log("drawConnections running...");
-            if (!svgElement || zoneData.length < 2) { console.log("Not enough data or no SVG element."); return; }
-            let maxX = 0, maxY = 0;
-             zoneData.forEach(zd => { if (!zd || !zd.element || typeof zd.x !== 'number' || typeof zd.y !== 'number') { console.warn("Skipping invalid zone data for SVG sizing:", zd); return; } const elementWidth = zd.element.classList.contains('zone-major') ? 160 : 120; const elementHeight = zd.element.classList.contains('zone-major') ? 65 : 50; maxX = Math.max(maxX, zd.x + elementWidth / 2); maxY = Math.max(maxY, zd.y + elementHeight / 2); });
-             const containerWidth = svgElement.parentNode.offsetWidth; const containerHeight = svgElement.parentNode.offsetHeight;
-             const svgWidth = Math.max(containerWidth, maxX + 20); const svgHeight = Math.max(containerHeight, maxY + 20);
-             svgElement.setAttribute('width', svgWidth); svgElement.setAttribute('height', svgHeight);
-             console.log(`SVG dimensions set to: ${svgWidth} x ${svgHeight}`);
-            const corridorConnections = new Set(); const ventConnections = new Set(); const corridorPairs = [];
-            if (layoutStyle === 'Grid') { zoneData.forEach((zone1, index1) => { zoneData.forEach((zone2, index2) => { if (index1 >= index2 || !zone1 || !zone2) return; const rowDiff = Math.abs(zone1.row - zone2.row); const colDiff = Math.abs(zone1.col - zone2.col); if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) { corridorPairs.push([zone1, zone2]); } }); }); }
-            else if (layoutStyle === 'HubAndSpoke') { const hub = zoneData.find(z => z && z.isHub); if (hub) { zoneData.forEach(zone => { if (zone && !zone.isHub) { corridorPairs.push([hub, zone]); } }); } }
-            else if (layoutStyle === 'Linear') { for (let i = 0; i < zoneData.length - 1; i++) { if(zoneData[i] && zoneData[i+1]) { corridorPairs.push([zoneData[i], zoneData[i + 1]]); } } }
-            corridorPairs.forEach(pair => { const zone1 = pair[0]; const zone2 = pair[1]; if (!zone1 || !zone2 || typeof zone1.x !== 'number' || typeof zone1.y !== 'number' || typeof zone2.x !== 'number' || typeof zone2.y !== 'number') { console.warn("Skipping corridor draw due to invalid zone data:", zone1, zone2); return; } const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', zone1.x); line.setAttribute('y1', zone1.y); line.setAttribute('x2', zone2.x); line.setAttribute('y2', zone2.y); line.setAttribute('class', 'connector-line connector-corridor'); svgElement.appendChild(line); const key = [zone1.name, zone2.name].sort().join('|'); corridorConnections.add(key); });
-            console.log(`Drew ${corridorConnections.size} corridor lines.`);
-            const ventPairs = []; const maxVentDistance = 300;
-            zoneData.forEach((zone1, index1) => { if (!zone1 || typeof zone1.x !== 'number' || typeof zone1.y !== 'number') return; const name1Lower = zone1.name.toLowerCase(); const isTech1 = technicalKeywords.some(k => name1Lower.includes(k.toLowerCase())); const isAccess1 = name1Lower.includes('access') || name1Lower.includes('vent') || name1Lower.includes('tunnel'); if (!isTech1 && !isAccess1) return; zoneData.forEach((zone2, index2) => { if (index1 >= index2 || !zone2 || typeof zone2.x !== 'number' || typeof zone2.y !== 'number') return; const name2Lower = zone2.name.toLowerCase(); const isTech2 = technicalKeywords.some(k => name2Lower.includes(k.toLowerCase())); let shouldVent = false; const distance = Math.sqrt(Math.pow(zone1.x - zone2.x, 2) + Math.pow(zone1.y - zone2.y, 2)); if (distance < maxVentDistance) { if (isTech1 && isTech2) { shouldVent = true; } else if (isAccess1 && isTech2) { shouldVent = true; } } if (shouldVent) { const key = [zone1.name, zone2.name].sort().join('|'); if (!corridorConnections.has(key) && !ventConnections.has(key)) { ventPairs.push([zone1, zone2]); ventConnections.add(key); } } }); });
-            ventPairs.forEach(pair => { const zone1 = pair[0]; const zone2 = pair[1]; if (!zone1 || !zone2 || typeof zone1.x !== 'number' || typeof zone1.y !== 'number' || typeof zone2.x !== 'number' || typeof zone2.y !== 'number') { console.warn("Skipping vent draw due to invalid zone data:", zone1, zone2); return; } const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', zone1.x); line.setAttribute('y1', zone1.y); line.setAttribute('x2', zone2.x); line.setAttribute('y2', zone2.y); line.setAttribute('class', 'connector-line connector-vent'); svgElement.appendChild(line); });
-            console.log(`Drew ${ventConnections.size} vent lines.`);
-            console.log("drawConnections finished.");
-        }
+Biphasic_P_waves
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0 0 2.72755 -0.450487 11.457 -0.450487 c 2.62071 0 2.55613 5.02255 5.24648 3.7262 c 2.69035 -1.29635 1.5699 -9.11678 4.33584 -9.15532 c 2.76593 -0.03855 0.435715 6.49869 6.81192 5.72612 c 3.73323 -0.452334 5.16992 0.876294 5.16992 0.876294 l 2.62979 4.83048 l 3.89683 -66.0014 l 1.2336 95.8279 c 0 0 1.01182 -34.1265 3.66897 -34.407 c 5.25649 -0.614697 12.0694 -1.34241 14.7014 -1.60833 c 2.63203 -0.265919 7.31971 -17.9467 15.0222 -17.376 c 7.70247 0.570678 6.98696 17.6623 16.7434 17.6623 c 9.75644 0 11.9324 -0.296264 11.9324 -0.296264  c 0 0 2.72755 -0.450487 11.457 -0.450487 c 2.62071 0 2.55613 5.02255 5.24648 3.7262 c 2.69035 -1.29635 1.5699 -9.11678 4.33584 -9.15532 c 2.76593 -0.03855 0.435715 6.49869 6.81192 5.72612 c 3.73323 -0.452334 5.16992 0.876294 5.16992 0.876294 l 2.62979 4.83048 l 3.89683 -66.0014 l 1.2336 95.8279 c 0 0 1.01182 -34.1265 3.66897 -34.407 c 5.25649 -0.614697 12.0694 -1.34241 14.7014 -1.60833 c 2.63203 -0.265919 7.31971 -17.9467 15.0222 -17.376 c 7.70247 0.570678 6.98696 17.6623 16.7434 17.6623 c 9.75644 0 11.9324 -0.296264 11.9324 -0.296264  c 0 0 2.72755 -0.450487 11.457 -0.450487 c 2.62071 0 2.55613 5.02255 5.24648 3.7262 c 2.69035 -1.29635 1.5699 -9.11678 4.33584 -9.15532 c 2.76593 -0.03855 0.435715 6.49869 6.81192 5.72612 c 3.73323 -0.452334 5.16992 0.876294 5.16992 0.876294 l 2.62979 4.83048 l 3.89683 -66.0014 l 1.2336 95.8279 c 0 0 1.01182 -34.1265 3.66897 -34.407 c 5.25649 -0.614697 12.0694 -1.34241 14.7014 -1.60833 c 2.63203 -0.265919 7.31971 -17.9467 15.0222 -17.376 c 7.70247 0.570678 6.98696 17.6623 16.7434 17.6623 c 9.75644 0 11.9324 -0.296264 11.9324 -0.296264  c 0 0 2.72755 -0.450487 11.457 -0.450487 c 2.62071 0 2.55613 5.02255 5.24648 3.7262 c 2.69035 -1.29635 1.5699 -9.11678 4.33584 -9.15532 c 2.76593 -0.03855 0.435715 6.49869 6.81192 5.72612 c 3.73323 -0.452334 5.16992 0.876294 5.16992 0.876294 l 2.62979 4.83048 l 3.89683 -66.0014 l 1.2336 95.8279 c 0 0 1.01182 -34.1265 3.66897 -34.407 c 5.25649 -0.614697 12.0694 -1.34241 14.7014 -1.60833 c 2.63203 -0.265919 7.31971 -17.9467 15.0222 -17.376 c 7.70247 0.570678 6.98696 17.6623 16.7434 17.6623 c 9.75644 0 11.9324 -0.296264 11.9324 -0.296264  c 0 0 2.72755 -0.450487 11.457 -0.450487 c 2.62071 0 2.55613 5.02255 5.24648 3.7262 c 2.69035 -1.29635 1.5699 -9.11678 4.33584 -9.15532 c 2.76593 -0.03855 0.435715 6.49869 6.81192 5.72612 c 3.73323 -0.452334 5.16992 0.876294 5.16992 0.876294 l 2.62979 4.83048 l 3.89683 -66.0014 l 1.2336 95.8279 c 0 0 1.01182 -34.1265 3.66897 -34.407 c 5.25649 -0.614697 12.0694 -1.34241 14.7014 -1.60833 c 2.63203 -0.265919 7.31971 -17.9467 15.0222 -17.376 c 7.70247 0.570678 6.98696 17.6623 16.7434 17.6623 c 9.75644 0 11.9324 -0.296264 11.9324 -0.296264  c 0 0 2.72755 -0.450487 11.457 -0.450487 c 2.62071 0 2.55613 5.02255 5.24648 3.7262 c 2.69035 -1.29635 1.5699 -9.11678 4.33584 -9.15532 c 2.76593 -0.03855 0.435715 6.49869 6.81192 5.72612 c 3.73323 -0.452334 5.16992 0.876294 5.16992 0.876294 l 2.62979 4.83048 l 3.89683 -66.0014 l 1.2336 95.8279 c 0 0 1.01182 -34.1265 3.66897 -34.407 c 5.25649 -0.614697 12.0694 -1.34241 14.7014 -1.60833 c 2.63203 -0.265919 7.31971 -17.9467 15.0222 -17.376 c 7.70247 0.570678 6.98696 17.6623 16.7434 17.6623 c 9.75644 0 11.9324 -0.296264 11.9324 -0.296264  c 0 0 2.72755 -0.450487 11.457 -0.450487 c 2.62071 0 2.55613 5.02255 5.24648 3.7262 c 2.69035 -1.29635 1.5699 -9.11678 4.33584 -9.15532 c 2.76593 -0.03855 0.435715 6.49869 6.81192 5.72612 c 3.73323 -0.452334 5.16992 0.876294 5.16992 0.876294 l 2.62979 4.83048 l 3.89683 -66.0014 l 1.2336 95.8279 c 0 0 1.01182 -34.1265 3.66897 -34.407 c 5.25649 -0.614697 12.0694 -1.34241 14.7014 -1.60833 c 2.63203 -0.265919 7.31971 -17.9467 15.0222 -17.376 c 7.70247 0.570678 6.98696 17.6623 16.7434 17.6623 c 9.75644 0 11.9324 -0.296264 11.9324 -0.296264" id="Biphasic_P_waves" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
-        // --- Initial Map Generation on Load ---
-        window.onload = () => {
-            console.log("Window loaded. Attempting initial map generation...");
-            try {
-                if (generateButton) { // Ensure button exists before initial call
-                     generateMap();
-                } else {
-                    console.warn("Generate button not found on load, skipping initial generation.");
-                }
-            } catch (error) {
-                console.error("Error during initial map generation (onload):", error);
-                 if(mapContainer) {
-                     mapContainer.innerHTML = `<p style="color: red; padding: 20px;">Error on initial load: ${error.message}. Try clicking 'Generate Map'.</p>`;
-                 }
-            }
-        };
+De_Winter's_T_wav
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.316498,-57.00622 0.653265,64.779956 c 4.915535,-5.085834 2.905742,-3.352689 15.178544,-8.584232 12.272803,-5.231544 11.553754,-35.973731 19.385849,-36.070818 7.832095,-0.09709 9.36886,31.062091 16.732241,30.978714 7.363381,-0.08338 11.93241,-0.296264 11.93241,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.316498,-57.00622 0.653265,64.779956 c 4.915535,-5.085834 2.905742,-3.352689 15.178544,-8.584232 12.272803,-5.231544 11.553754,-35.973731 19.385849,-36.070818 7.832095,-0.09709 9.36886,31.062091 16.732241,30.978714 7.363381,-0.08338 11.93241,-0.296264 11.93241,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.316498,-57.00622 0.653265,64.779956 c 4.915535,-5.085834 2.905742,-3.352689 15.178544,-8.584232 12.272803,-5.231544 11.553754,-35.973731 19.385849,-36.070818 7.832095,-0.09709 9.36886,31.062091 16.732241,30.978714 7.363381,-0.08338 11.93241,-0.296264 11.93241,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.316498,-57.00622 0.653265,64.779956 c 4.915535,-5.085834 2.905742,-3.352689 15.178544,-8.584232 12.272803,-5.231544 11.553754,-35.973731 19.385849,-36.070818 7.832095,-0.09709 9.36886,31.062091 16.732241,30.978714 7.363381,-0.08338 11.93241,-0.296264 11.93241,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.316498,-57.00622 0.653265,64.779956 c 4.915535,-5.085834 2.905742,-3.352689 15.178544,-8.584232 12.272803,-5.231544 11.553754,-35.973731 19.385849,-36.070818 7.832095,-0.09709 9.36886,31.062091 16.732241,30.978714 7.363381,-0.08338 11.93241,-0.296264 11.93241,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.316498,-57.00622 0.653265,64.779956 c 4.915535,-5.085834 2.905742,-3.352689 15.178544,-8.584232 12.272803,-5.231544 11.553754,-35.973731 19.385849,-36.070818 7.832095,-0.09709 9.36886,31.062091 16.732241,30.978714 7.363381,-0.08338 11.93241,-0.296264 11.93241,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.316498,-57.00622 0.653265,64.779956 c 4.915535,-5.085834 2.905742,-3.352689 15.178544,-8.584232 12.272803,-5.231544 11.553754,-35.973731 19.385849,-36.070818 7.832095,-0.09709 9.36886,31.062091 16.732241,30.978714 7.363381,-0.08338 11.93241,-0.296264 11.93241,-0.296264" id="De_Winter's_T_wav" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
-    </script>
+Long_PR_interval
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 11.16992,0.876294 11.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.233602,95.8278604 c 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98929,17.449104 16.74341,17.662323 6.637137,0.145084 5.258557,-0.586431 5.258557,-0.586431 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 11.16992,0.876294 11.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.233602,95.8278604 c 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98929,17.449104 16.74341,17.662323 6.637137,0.145084 5.258557,-0.586431 5.258557,-0.586431 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 11.16992,0.876294 11.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.233602,95.8278604 c 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98929,17.449104 16.74341,17.662323 6.637137,0.145084 5.258557,-0.586431 5.258557,-0.586431 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 11.16992,0.876294 11.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.233602,95.8278604 c 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98929,17.449104 16.74341,17.662323 6.637137,0.145084 5.258557,-0.586431 5.258557,-0.586431 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 11.16992,0.876294 11.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.233602,95.8278604 c 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98929,17.449104 16.74341,17.662323 6.637137,0.145084 5.258557,-0.586431 5.258557,-0.586431 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 11.16992,0.876294 11.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.233602,95.8278604 c 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98929,17.449104 16.74341,17.662323 6.637137,0.145084 5.258557,-0.586431 5.258557,-0.586431 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 11.16992,0.876294 11.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.233602,95.8278604 c 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98929,17.449104 16.74341,17.662323 6.637137,0.145084 5.258557,-0.586431 5.258557,-0.586431" id="Long_PR_interval" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
-</body>
-</html>
-```
+Qpath
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 2.694103,-0.604653 5.16992,0.876294 2.475817,1.480947 0.995166,28.649346 2.62979,29.246816 1.634624,0.59747 2.847922,-43.033552 4.717549,-36.250412 1.869627,6.783139 3.40822,7.206887 18.783271,5.645175 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 2.694103,-0.604653 5.16992,0.876294 2.475817,1.480947 0.995166,28.649346 2.62979,29.246816 1.634624,0.59747 2.847922,-43.033552 4.717549,-36.250412 1.869627,6.783139 3.40822,7.206887 18.783271,5.645175 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 2.694103,-0.604653 5.16992,0.876294 2.475817,1.480947 0.995166,28.649346 2.62979,29.246816 1.634624,0.59747 2.847922,-43.033552 4.717549,-36.250412 1.869627,6.783139 3.40822,7.206887 18.783271,5.645175 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 2.694103,-0.604653 5.16992,0.876294 2.475817,1.480947 0.995166,28.649346 2.62979,29.246816 1.634624,0.59747 2.847922,-43.033552 4.717549,-36.250412 1.869627,6.783139 3.40822,7.206887 18.783271,5.645175 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 2.694103,-0.604653 5.16992,0.876294 2.475817,1.480947 0.995166,28.649346 2.62979,29.246816 1.634624,0.59747 2.847922,-43.033552 4.717549,-36.250412 1.869627,6.783139 3.40822,7.206887 18.783271,5.645175 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 2.694103,-0.604653 5.16992,0.876294 2.475817,1.480947 0.995166,28.649346 2.62979,29.246816 1.634624,0.59747 2.847922,-43.033552 4.717549,-36.250412 1.869627,6.783139 3.40822,7.206887 18.783271,5.645175 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 2.694103,-0.604653 5.16992,0.876294 2.475817,1.480947 0.995166,28.649346 2.62979,29.246816 1.634624,0.59747 2.847922,-43.033552 4.717549,-36.250412 1.869627,6.783139 3.40822,7.206887 18.783271,5.645175 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="Qpath" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
-**Summary of Changes:**
+QRS_isoelectric
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.486474,-38.302204 0.618065,68.539019 c 0,0 2.037719,-34.536881 4.694862,-34.817391 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.486474,-38.302204 0.618065,68.539019 c 0,0 2.037719,-34.536881 4.694862,-34.817391 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.486474,-38.302204 0.618065,68.539019 c 0,0 2.037719,-34.536881 4.694862,-34.817391 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.486474,-38.302204 0.618065,68.539019 c 0,0 2.037719,-34.536881 4.694862,-34.817391 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.486474,-38.302204 0.618065,68.539019 c 0,0 2.037719,-34.536881 4.694862,-34.817391 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.486474,-38.302204 0.618065,68.539019 c 0,0 2.037719,-34.536881 4.694862,-34.817391 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="QRS_isoelectric" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
-1.  **Removed Data Duplication:** The `coreZones` and `optionalZones` variables are now defined only once.
-2.  **Robust Startup:** Added `try...catch` around the initial DOM element fetching and the `window.onload` function call to catch errors that might occur right at the start. Checks are included to ensure essential elements exist.
-3.  **Removed Export Code:** All traces of the `exportButton` and the `exportSVG` function have been removed.
+QRS_negative
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="QRS_negative" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
 
-This version *should* now work correctly. Please try generating a map again and let me know if it functions as expected. Remember to check the console (F12) if you encounter any further issu
+QRS_negative_2
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 2.870937,-20.656786 1.233602,44.738219 c 0,0 2.037719,-28.381499 4.694862,-28.662009 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="QRS_negative_2" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+QRS_negative_2
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,-2.350794 1.229502,38.02449 3.695754,-28.715965 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,-2.350794 1.229502,38.02449 3.695754,-28.715965 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,-2.350794 1.229502,38.02449 3.695754,-28.715965 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,-2.350794 1.229502,38.02449 3.695754,-28.715965 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,-2.350794 1.229502,38.02449 3.695754,-28.715965 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,-2.350794 1.229502,38.02449 3.695754,-28.715965 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,-2.350794 1.229502,38.02449 3.695754,-28.715965 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="QRS_negative_2" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+QRS_positive_2
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.028423,68.1286574 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.028423,68.1286574 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.028423,68.1286574 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.028423,68.1286574 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.028423,68.1286574 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.028423,68.1286574 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.0014074 1.028423,68.1286574 c 0,0 1.217002,-6.427316 3.874145,-6.707826 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="QRS_positive_2" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+Qrspreex
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 3.266623,6.737865 6.606744,6.957197 3.340121,0.219332 3.483581,-8.217826 5.665943,-11.213403 2.182362,-2.995578 5.911907,-22.493076 7.672034,-44.5672852 -1.348906,39.3241582 1.233602,91.3139162 1.233602,91.3139162 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 3.266623,6.737865 6.606744,6.957197 3.340121,0.219332 3.483581,-8.217826 5.665943,-11.213403 2.182362,-2.995578 5.911907,-22.493076 7.672034,-44.5672852 -1.348906,39.3241582 1.233602,91.3139162 1.233602,91.3139162 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 3.266623,6.737865 6.606744,6.957197 3.340121,0.219332 3.483581,-8.217826 5.665943,-11.213403 2.182362,-2.995578 5.911907,-22.493076 7.672034,-44.5672852 -1.348906,39.3241582 1.233602,91.3139162 1.233602,91.3139162 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 3.266623,6.737865 6.606744,6.957197 3.340121,0.219332 3.483581,-8.217826 5.665943,-11.213403 2.182362,-2.995578 5.911907,-22.493076 7.672034,-44.5672852 -1.348906,39.3241582 1.233602,91.3139162 1.233602,91.3139162 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 3.266623,6.737865 6.606744,6.957197 3.340121,0.219332 3.483581,-8.217826 5.665943,-11.213403 2.182362,-2.995578 5.911907,-22.493076 7.672034,-44.5672852 -1.348906,39.3241582 1.233602,91.3139162 1.233602,91.3139162 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 3.266623,6.737865 6.606744,6.957197 3.340121,0.219332 3.483581,-8.217826 5.665943,-11.213403 2.182362,-2.995578 5.911907,-22.493076 7.672034,-44.5672852 -1.348906,39.3241582 1.233602,91.3139162 1.233602,91.3139162 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 3.266623,6.737865 6.606744,6.957197 3.340121,0.219332 3.483581,-8.217826 5.665943,-11.213403 2.182362,-2.995578 5.911907,-22.493076 7.672034,-44.5672852 -1.348906,39.3241582 1.233602,91.3139162 1.233602,91.3139162 0,0 1.011823,-34.126519 3.668966,-34.407029 5.25649,-0.614697 12.069399,-1.342407 14.701419,-1.608326 2.63203,-0.265919 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="Qrspreex" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+Qrsrsr
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 3.209306,-20.140427 6.526623,-61.1709264 6.526623,-61.1709264 l 1.233602,95.8278604 6.336297,-84.675953 c 0,0 2.978264,49.625974 5.667555,49.333969 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 3.209306,-20.140427 6.526623,-61.1709264 6.526623,-61.1709264 l 1.233602,95.8278604 6.336297,-84.675953 c 0,0 2.978264,49.625974 5.667555,49.333969 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 3.209306,-20.140427 6.526623,-61.1709264 6.526623,-61.1709264 l 1.233602,95.8278604 6.336297,-84.675953 c 0,0 2.978264,49.625974 5.667555,49.333969 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 3.209306,-20.140427 6.526623,-61.1709264 6.526623,-61.1709264 l 1.233602,95.8278604 6.336297,-84.675953 c 0,0 2.978264,49.625974 5.667555,49.333969 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 3.209306,-20.140427 6.526623,-61.1709264 6.526623,-61.1709264 l 1.233602,95.8278604 6.336297,-84.675953 c 0,0 2.978264,49.625974 5.667555,49.333969 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 3.209306,-20.140427 6.526623,-61.1709264 6.526623,-61.1709264 l 1.233602,95.8278604 6.336297,-84.675953 c 0,0 2.978264,49.625974 5.667555,49.333969 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 3.209306,-20.140427 6.526623,-61.1709264 6.526623,-61.1709264 l 1.233602,95.8278604 6.336297,-84.675953 c 0,0 2.978264,49.625974 5.667555,49.333969 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="Qrsrsr" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+Qrsw
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.315004,-1.735212 5.315004,-1.735212 2.218612,16.467206 3.867535,33.293424 4.785619,33.858873 0.918083,0.565448 2.974606,-2.248696 2.974606,-2.248696 l 3.724791,1.503743 c 0,0 5.444686,-30.895459 8.133977,-31.187464 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.315004,-1.735212 5.315004,-1.735212 2.218612,16.467206 3.867535,33.293424 4.785619,33.858873 0.918083,0.565448 2.974606,-2.248696 2.974606,-2.248696 l 3.724791,1.503743 c 0,0 5.444686,-30.895459 8.133977,-31.187464 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.315004,-1.735212 5.315004,-1.735212 2.218612,16.467206 3.867535,33.293424 4.785619,33.858873 0.918083,0.565448 2.974606,-2.248696 2.974606,-2.248696 l 3.724791,1.503743 c 0,0 5.444686,-30.895459 8.133977,-31.187464 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.315004,-1.735212 5.315004,-1.735212 2.218612,16.467206 3.867535,33.293424 4.785619,33.858873 0.918083,0.565448 2.974606,-2.248696 2.974606,-2.248696 l 3.724791,1.503743 c 0,0 5.444686,-30.895459 8.133977,-31.187464 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.315004,-1.735212 5.315004,-1.735212 2.218612,16.467206 3.867535,33.293424 4.785619,33.858873 0.918083,0.565448 2.974606,-2.248696 2.974606,-2.248696 l 3.724791,1.503743 c 0,0 5.444686,-30.895459 8.133977,-31.187464 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.315004,-1.735212 5.315004,-1.735212 2.218612,16.467206 3.867535,33.293424 4.785619,33.858873 0.918083,0.565448 2.974606,-2.248696 2.974606,-2.248696 l 3.724791,1.503743 c 0,0 5.444686,-30.895459 8.133977,-31.187464 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264 c 0,0 2.72755218,-0.450487 11.45700928,-0.450487 5.241407,0 3.845268,-6.993469 8.146058,-6.660201 4.30079,0.333268 1.871968,7.729765 8.248178,6.957197 3.73323,-0.452334 5.315004,-1.735212 5.315004,-1.735212 2.218612,16.467206 3.867535,33.293424 4.785619,33.858873 0.918083,0.565448 2.974606,-2.248696 2.974606,-2.248696 l 3.724791,1.503743 c 0,0 5.444686,-30.895459 8.133977,-31.187464 2.689291,-0.292004 3.164435,0.185007 6.366533,-0.673371 3.202098,-0.858378 7.31971,-17.946698 15.02217,-17.376021 7.70247,0.570678 6.98696,17.662323 16.74341,17.662323 9.756437,0 11.932407,-0.296264 11.932407,-0.296264" id="Qrsw" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+Stdownsloping
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.858437,-41.307791 3.874145,-31.124157 7.103104,2.462992 15.557442,13.430501 19.830901,5.572949 4.27346,-7.857553 4.65238,-28.000483 9.687509,-27.840165 7.71967,0.245794 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.858437,-41.307791 3.874145,-31.124157 7.103104,2.462992 15.557442,13.430501 19.830901,5.572949 4.27346,-7.857553 4.65238,-28.000483 9.687509,-27.840165 7.71967,0.245794 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.858437,-41.307791 3.874145,-31.124157 7.103104,2.462992 15.557442,13.430501 19.830901,5.572949 4.27346,-7.857553 4.65238,-28.000483 9.687509,-27.840165 7.71967,0.245794 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.858437,-41.307791 3.874145,-31.124157 7.103104,2.462992 15.557442,13.430501 19.830901,5.572949 4.27346,-7.857553 4.65238,-28.000483 9.687509,-27.840165 7.71967,0.245794 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.858437,-41.307791 3.874145,-31.124157 7.103104,2.462992 15.557442,13.430501 19.830901,5.572949 4.27346,-7.857553 4.65238,-28.000483 9.687509,-27.840165 7.71967,0.245794 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.858437,-41.307791 3.874145,-31.124157 7.103104,2.462992 15.557442,13.430501 19.830901,5.572949 4.27346,-7.857553 4.65238,-28.000483 9.687509,-27.840165 7.71967,0.245794 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.858437,-41.307791 3.874145,-31.124157 7.103104,2.462992 15.557442,13.430501 19.830901,5.572949 4.27346,-7.857553 4.65238,-28.000483 9.687509,-27.840165 7.71967,0.245794 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264" id="Stdownsloping" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+Stpericard (doesn't seem to work properly on the SVG path)
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 2.203836,-6.58311 6.504626,-6.249842 4.300784,0.333268 2.077139,10.602275 8.453351,9.829707 3.73323,-0.452334 6.195816,-0.149603 6.195816,-0.149603 C 37.788023,69.451788 38.740024,4.934967 40.84041,5.0376423 42.940797,5.1403175 36.217871,53.886871 52.948514,57.572671 69.679157,61.25847 68.311377,39.154372 74.64585,38.446238 c 7.70247,0.570678 8.218036,26.485032 17.974486,26.485032 9.756434,0 11.932404,-0.296264 11.932404,-0.296264" id="Stpericard" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
+
+Sttomb
+<svg width="800px" height="200px" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="black"/>
+  <!-- EKG Path -->
+  <path d="M17.902,114.475 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.188162,-28.604824 3.874145,-35.022564 1.685984,-6.417739 3.010603,-23.834516 7.551245,-30.780447 3.972007,-6.076074 8.809261,-9.986752 12.279657,-8.580866 3.470395,1.405885 6.490843,15.192584 9.687508,20.992504 3.240063,5.87866 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.188162,-28.604824 3.874145,-35.022564 1.685984,-6.417739 3.010603,-23.834516 7.551245,-30.780447 3.972007,-6.076074 8.809261,-9.986752 12.279657,-8.580866 3.470395,1.405885 6.490843,15.192584 9.687508,20.992504 3.240063,5.87866 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.188162,-28.604824 3.874145,-35.022564 1.685984,-6.417739 3.010603,-23.834516 7.551245,-30.780447 3.972007,-6.076074 8.809261,-9.986752 12.279657,-8.580866 3.470395,1.405885 6.490843,15.192584 9.687508,20.992504 3.240063,5.87866 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.188162,-28.604824 3.874145,-35.022564 1.685984,-6.417739 3.010603,-23.834516 7.551245,-30.780447 3.972007,-6.076074 8.809261,-9.986752 12.279657,-8.580866 3.470395,1.405885 6.490843,15.192584 9.687508,20.992504 3.240063,5.87866 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.188162,-28.604824 3.874145,-35.022564 1.685984,-6.417739 3.010603,-23.834516 7.551245,-30.780447 3.972007,-6.076074 8.809261,-9.986752 12.279657,-8.580866 3.470395,1.405885 6.490843,15.192584 9.687508,20.992504 3.240063,5.87866 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.188162,-28.604824 3.874145,-35.022564 1.685984,-6.417739 3.010603,-23.834516 7.551245,-30.780447 3.972007,-6.076074 8.809261,-9.986752 12.279657,-8.580866 3.470395,1.405885 6.490843,15.192584 9.687508,20.992504 3.240063,5.87866 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264 c 0,0 2.7275501,-0.450487 11.4570099,-0.450487 5.24141,0 3.84527,-6.993469 8.14606,-6.660201 4.300784,0.333268 1.87196,7.729765 8.248172,6.957197 3.73323,-0.452334 5.16992,0.876294 5.16992,0.876294 l 2.62979,4.830481 3.896833,-66.001407 1.233602,95.827857 c 0,0 2.188162,-28.604824 3.874145,-35.022564 1.685984,-6.417739 3.010603,-23.834516 7.551245,-30.780447 3.972007,-6.076074 8.809261,-9.986752 12.279657,-8.580866 3.470395,1.405885 6.490843,15.192584 9.687508,20.992504 3.240063,5.87866 6.98696,17.662323 16.74341,17.662323 9.756434,0 11.932404,-0.296264 11.932404,-0.296264" id="Sttomb" fill="none" stroke="green" stroke-width="2">
+    <animate 
+      attributeName="stroke-dashoffset" 
+      from="2000" to="0" 
+      dur="5s" 
+      repeatCount="indefinite"/>
+  </path>
+  <!-- Stroke dash array / dash offset animation setup -->
+  <style>
+    path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+    }
+  </style>
+</svg>
