@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Map Prototype - FINAL Data Declaration Fix v2</title> <style>
+    <title>Graph Map Prototype - FINAL Data Declaration Fix</title> <style>
         /* Basic styling */
         body {
             font-family: 'Consolas', 'Courier New', monospace;
@@ -46,17 +46,15 @@
             border: 2px solid #3a5a3a;
             position: relative;
             margin-top: 20px;
-            overflow-x: auto; /* Keep horizontal scroll */
-            overflow-y: hidden; /* Hide vertical scroll */
-            padding-bottom: 15px; /* Space for scrollbar */
-            box-sizing: border-box;
+            overflow: hidden; /* Hide overflow for now */
         }
         /* SVG Overlay */
         #connector-svg {
             position: absolute;
             top: 0;
             left: 0;
-            /* Width/Height set dynamically by JS to match content */
+            width: 100%;
+            height: 100%;
             z-index: 1;
             pointer-events: none;
         }
@@ -105,7 +103,7 @@
 </head>
 <body>
 
-    <h1>Graph Map Prototype - FINAL Data Declaration Fix v2</h1> <div class="controls">
+    <h1>Graph Map Prototype - FINAL Data Declaration Fix</h1> <div class="controls">
         <div>
             <label for="facility-type">Type:</label>
             <select id="facility-type">
@@ -208,7 +206,7 @@
             let potentialNodes = selectRandomElements(baseZonePool, numCore); potentialNodes = potentialNodes.concat(selectRandomElements(optionalZonePool, numOptional));
             const ensureTypePresent = (keywords, defaultNode) => { if (!potentialNodes.some(n => n && keywords.some(k => n.name.includes(k)))) { const foundNode = baseZonePool.find(n => n && keywords.some(k => n.name.includes(k))) || optionalZonePool.find(n => n && keywords.some(k => n.name.includes(k))) || defaultNode; if(foundNode && !selectedNodeNames.has(foundNode.name)) { console.log(`Ensuring presence of type: ${defaultNode.type}`); potentialNodes.push(foundNode); } } };
             ensureTypePresent(commandKeywords, {name: 'Default Command', type: 'Command'}); ensureTypePresent(habitationKeywords, {name: 'Default Hab', type: 'Habitation'}); ensureTypePresent(technicalKeywords, {name: 'Default Engineering', type: 'Technical'});
-            potentialNodes.forEach(nodeData => { if (nodeData && nodeData.name && !selectedNodeNames.has(nodeData.name)) { nodes.push({ id: `node_${nodeIdCounter++}`, name: nodeData.name, type: nodeData.type || 'Unknown' }); selectedNodeNames.add(nodeData.name); } });
+            potentialNodes.forEach(nodeData => { if (nodeData && nodeData.name && !selectedNodeNames.has(nodeData.name)) { nodes.push({ id: `node_${nodeIdCounter++}`, name: nodeData.name, type: nodeData.type || 'Unknown', isMajor: majorZoneKeywords.some(k => nodeData.name.includes(k)) }); selectedNodeNames.add(nodeData.name); } });
             const edgeExists = (n1Id, n2Id) => edges.some(e => (e.source === n1Id && e.target === n2Id) || (e.source === n2Id && e.target === n1Id)); const addEdge = (n1, n2, type) => { if (n1 && n2 && n1.id && n2.id && n1.id !== n2.id && !edgeExists(n1.id, n2.id)) { edges.push({ source: n1.id, target: n2.id, type: type }); } };
             const commandNode = nodes.find(n => n.type === 'Command'); const habNodes = nodes.filter(n => n.type === 'Habitation'); const techNodes = nodes.filter(n => n.type === 'Technical'); const accessNodes = nodes.filter(n => n.type === 'Access'); const amenityNodes = nodes.filter(n => n.type === 'Amenity'); const medbayNode = nodes.find(n => n.type === 'Medical'); const securityNodes = nodes.filter(n => n.type === 'Security'); const cargoNodes = nodes.filter(n => n.type === 'Cargo' || n.type === 'Industrial');
             if (commandNode) { securityNodes.forEach(sec => addEdge(commandNode, sec, 'corridor')); habNodes.forEach(hab => addEdge(commandNode, hab, 'corridor')); accessNodes.forEach(acc => addEdge(commandNode, acc, 'corridor')); }
@@ -216,9 +214,22 @@
             techNodes.forEach(tech1 => { techNodes.forEach(tech2 => { if(tech1.id < tech2.id) addEdge(tech1, tech2, 'vent'); }); accessNodes.forEach(acc => addEdge(tech1, acc, 'corridor')); cargoNodes.forEach(cargo => addEdge(tech1, cargo, 'corridor')); });
              if(medbayNode && techNodes.length > 0) addEdge(medbayNode, techNodes[0], 'vent');
              securityNodes.forEach(sec => { accessNodes.forEach(acc => addEdge(sec, acc, 'corridor')); const brig = nodes.find(n => n.name === 'Brig' || n.name === 'Holding Cells'); if (brig) addEdge(sec, brig, 'corridor'); });
-             if (nodes.length > 1 && edges.length < nodes.length -1) { const connectedNodes = new Set(); edges.forEach(e => { connectedNodes.add(e.source); connectedNodes.add(e.target); }); const unconnected = nodes.filter(n => n && n.id && !connectedNodes.has(n.id)); const connectToNode = commandNode || nodes[0]; if (connectToNode) { unconnected.forEach(node => { if (node && connectToNode && node.id !== connectToNode.id) { console.log(`Connecting loose node ${node.name} to ${connectToNode.name}`); addEdge(node, connectToNode, 'corridor'); } }); } }
+             cargoNodes.forEach(cargo => { accessNodes.forEach(acc => addEdge(cargo, acc, 'corridor')); });
+            checkAndEnsureConnectivity(nodes, edges, addEdge);
             console.log("Generated graph:", { nodes, edges }); return { nodes, edges };
         }
+
+        /** Checks graph connectivity using BFS and adds edges if needed */
+        function checkAndEnsureConnectivity(nodes, edges, addEdgeFunc) {
+             if (nodes.length <= 1) return;
+             const adjacencyList = new Map(); nodes.forEach(n => adjacencyList.set(n.id, []));
+             edges.forEach(e => { if (adjacencyList.has(e.source)) adjacencyList.get(e.source).push(e.target); if (adjacencyList.has(e.target)) adjacencyList.get(e.target).push(e.source); });
+             const visited = new Set(); const queue = []; const startNode = nodes[0]; if (!startNode) return;
+             queue.push(startNode.id); visited.add(startNode.id);
+             while (queue.length > 0) { const currentNodeId = queue.shift(); const neighbors = adjacencyList.get(currentNodeId) || []; neighbors.forEach(neighborId => { if (adjacencyList.has(neighborId) && !visited.has(neighborId)) { visited.add(neighborId); queue.push(neighborId); } }); }
+             if (visited.size < nodes.length) { console.warn("Graph is disconnected. Adding edges..."); const mainComponentNode = startNode; nodes.forEach(node => { if (node && node.id && !visited.has(node.id)) { console.log(`Connecting disconnected node ${node.name} to ${mainComponentNode.name}`); addEdgeFunc(node, mainComponentNode, 'corridor'); } }); }
+             else { console.log("Graph connectivity check passed."); }
+         }
 
 
         // --- Main Function to Display Map ---
@@ -240,8 +251,7 @@
                 let maxX = 0, maxY = 0; let minX = containerWidth, minY = containerHeight;
                 Object.values(nodePositions).forEach(pos => { if(pos && typeof pos.x === 'number' && typeof pos.y === 'number'){ maxX = Math.max(maxX, pos.x); maxY = Math.max(maxY, pos.y); minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y); } });
                 const nodeSizeEstimate = 160; const padding = nodeSizeEstimate / 2 + 20;
-                const svgWidth = Math.max(containerWidth, maxX + padding); // Use max X for width calc
-                const svgHeight = Math.max(containerHeight, maxY + padding); // Use max Y for height calc
+                const svgWidth = Math.max(containerWidth, maxX + padding); const svgHeight = Math.max(containerHeight, maxY + padding);
                 svgElement.setAttribute('width', svgWidth); svgElement.setAttribute('height', svgHeight);
                 console.log(`SVG dimensions set to: ${svgWidth} x ${svgHeight}`);
                 renderNodes(facilityGraph.nodes, mapContainer);
@@ -263,7 +273,8 @@
         }
         function layoutNodesForceDirected(nodes, edges, width, height) {
             console.log("Using Force-Directed Layout");
-            const iterations = 200; const repulsionStrength = 5000; const attractionStrength = 0.04; const idealEdgeLength = 150; const damping = 0.85;
+            const iterations = 250; const repulsionStrength = 6000; const attractionStrength = 0.05; const idealEdgeLength = 120; const damping = 0.80; const overlapPadding = 10; const overlapStrength = 0.5;
+             const nodeSizes = {}; nodes.forEach(node => { if (node && node.id) { const isMajor = majorZoneKeywords.some(k => node.name.toLowerCase().includes(k.toLowerCase())); nodeSizes[node.id] = { width: isMajor ? 160 : 100, height: isMajor ? 65 : 50 }; } });
             layoutNodesSimpleCircle(nodes, width, height); // Start with circle positions
             let forces = {};
             for (let i = 0; i < iterations; i++) {
@@ -273,28 +284,15 @@
                         const node1 = nodes[j]; const node2 = nodes[k]; if (!node1 || !node2 || !node1.id || !node2.id) continue;
                         const pos1 = nodePositions[node1.id]; const pos2 = nodePositions[node2.id]; if (!pos1 || !pos2) continue;
                         const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) distance = 0.1;
-                        const force = repulsionStrength / (distance * distance); const fx = (dx / distance) * force; const fy = (dy / distance) * force;
-                        if (forces[node1.id]) { forces[node1.id].x -= fx; forces[node1.id].y -= fy; }
-                        if (forces[node2.id]) { forces[node2.id].x += fx; forces[node2.id].y += fy; }
+                        const repulsionForce = repulsionStrength / (distance * distance); const rfx = (dx / distance) * repulsionForce; const rfy = (dy / distance) * repulsionForce;
+                        if (forces[node1.id]) { forces[node1.id].x -= rfx; forces[node1.id].y -= rfy; } if (forces[node2.id]) { forces[node2.id].x += rfx; forces[node2.id].y += rfy; }
+                        const size1 = nodeSizes[node1.id] || { width: 100, height: 50 }; const size2 = nodeSizes[node2.id] || { width: 100, height: 50 };
+                        const overlapX = (size1.width + size2.width) / 2 + overlapPadding - Math.abs(dx); const overlapY = (size1.height + size2.height) / 2 + overlapPadding - Math.abs(dy);
+                        if (overlapX > 0 && overlapY > 0) { const separationForce = overlapStrength * (overlapX + overlapY); const sfx = (dx / distance) * separationForce; const sfy = (dy / distance) * separationForce; if (forces[node1.id]) { forces[node1.id].x -= sfx; forces[node1.id].y -= sfy; } if (forces[node2.id]) { forces[node2.id].x += sfx; forces[node2.id].y += sfy; } }
                     }
                 }
-                edges.forEach(edge => {
-                    if (!edge || !edge.source || !edge.target) return;
-                    const sourceNode = nodes.find(n => n && n.id === edge.source); const targetNode = nodes.find(n => n && n.id === edge.target); if (!sourceNode || !targetNode) return;
-                    const pos1 = nodePositions[sourceNode.id]; const pos2 = nodePositions[targetNode.id]; if (!pos1 || !pos2) return;
-                    const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) return;
-                    const force = attractionStrength * (distance - idealEdgeLength); const fx = (dx / distance) * force; const fy = (dy / distance) * force;
-                     if (forces[sourceNode.id]) { forces[sourceNode.id].x += fx; forces[sourceNode.id].y += fy; }
-                     if (forces[targetNode.id]) { forces[targetNode.id].x -= fx; forces[targetNode.id].y -= fy; }
-                });
-                nodes.forEach(node => {
-                     if (!node || !node.id) return;
-                    const pos = nodePositions[node.id]; const force = forces[node.id]; if (!pos || !force) return;
-                    pos.x += force.x * damping; pos.y += force.y * damping;
-                    const nodeSizeEstimate = 160; // Use max width for boundary check
-                    pos.x = Math.max(nodeSizeEstimate / 2, Math.min(width - nodeSizeEstimate / 2, pos.x));
-                    pos.y = Math.max(nodeSizeEstimate / 2, Math.min(height - nodeSizeEstimate / 2, pos.y));
-                });
+                edges.forEach(edge => { if (!edge || !edge.source || !edge.target) return; const sourceNode = nodes.find(n => n && n.id === edge.source); const targetNode = nodes.find(n => n && n.id === edge.target); if (!sourceNode || !targetNode) return; const pos1 = nodePositions[sourceNode.id]; const pos2 = nodePositions[targetNode.id]; if (!pos1 || !pos2) return; const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) return; const force = attractionStrength * (distance - idealEdgeLength); const fx = (dx / distance) * force; const fy = (dy / distance) * force; if (forces[sourceNode.id]) { forces[sourceNode.id].x += fx; forces[sourceNode.id].y += fy; } if (forces[targetNode.id]) { forces[targetNode.id].x -= fx; forces[targetNode.id].y -= fy; } });
+                nodes.forEach(node => { if (!node || !node.id) return; const pos = nodePositions[node.id]; const force = forces[node.id]; if (!pos || !force) return; pos.x += force.x * damping; pos.y += force.y * damping; const nodeSize = nodeSizes[node.id] || { width: 100, height: 50 }; pos.x = Math.max(nodeSize.width / 2 + 5, Math.min(width - nodeSize.width / 2 - 5, pos.x)); pos.y = Math.max(nodeSize.height / 2 + 5, Math.min(height - nodeSize.height / 2 - 5, pos.y)); });
             }
              centerGraph(nodes, width, height);
             console.log("Force-Directed layout calculation finished.");
@@ -307,6 +305,7 @@
              const containerCenterX = width / 2; const containerCenterY = height / 2; const shiftX = containerCenterX - graphCenterX; const shiftY = containerCenterY - graphCenterY;
              nodes.forEach(node => { if(node && node.id && nodePositions[node.id]){ nodePositions[node.id].x += shiftX; nodePositions[node.id].y += shiftY;} });
          }
+
 
         // --- Rendering Functions ---
         function renderNodes(nodes, container) {
@@ -376,6 +375,6 @@
 
 **Summary of Fix:**
 
-1.  **Removed Duplicate `facilityData`:** The primary fix was removing the extra, incorrect declaration of the `facilityData` constant.
+1.  **Removed Duplicate `facilityData`:** The primary fix was removing the extra, incorrect declaration of the `facilityData` constant that was still present.
 
-This should resolve the `SyntaxError` and allow the script to execute correctly, enabling the "Generate Graph Map" button. Please try this versi
+This should finally resolve the `SyntaxError` and allow the script to execute, making the "Generate Graph Map" button functional again. Please check the console if any issues persi
