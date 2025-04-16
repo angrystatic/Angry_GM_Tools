@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aliens-Style Combat Tracker (v3.3 - Final Full Code)</title>
+    <style>
+        /* Import Google Font */
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        :root {
+            /* --- Theme Configuration --- */
+            --monitor-bg: black;
+            --primary-color: lime; /* Bright Green */
+            --warning-color: #FFD700; /* Gold/Yellow */
+            --critical-color: #FF851B; /* Orange */
+            --broken-color: #FF4136; /* Red */
+            --dead-color: #555555; /* Dark Grey */
+            --card-bg: #1a1a1a; /* Dark Background for card */
+            --card-border-color: var(--primary-color);
+            --text-color: var(--primary-color);
+            --input-bg: #222;
+            --input-border: var(--primary-color);
+            --grid-color: rgba(0, 255, 0, 0.08); /* Faint green grid */
+            --font-family: 'VT323', monospace; /* Retro pixel font */
+            /* --- End Theme --- */
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #0a0a0a; /* Very dark grey */
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            font-size: 18px; /* Increase base font size for VT323 readability */
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 30px; /* More space below title */
+        }
+
+        .dashboard-container {
+            padding: 20px;
+        }
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px; /* Increased gap */
+            justify-content: center; /* Center cards */
+        }
+
+        .character-card {
+            border: 3px solid var(--card-border-color); /* Bezel effect */
+            background-color: var(--card-bg);
+            padding: 10px 15px; /* Adjust padding */
+            border-radius: 4px; /* Sharper corners */
+            width: 320px; /* Adjusted width */
+            box-shadow: inset 0 0 8px 0px rgba(0, 0, 0, 0.5), /* Inner shadow */
+                        3px 3px 8px rgba(0, 0, 0, 0.7); /* Outer shadow */
+            display: flex;
+            flex-direction: column;
+            color: var(--text-color); /* Ensure text color inherits */
+        }
+
+        .character-card h2 {
+            margin: 0 0 10px 0; /* Adjusted margin */
+            border-bottom: 1px solid var(--card-border-color);
+            padding-bottom: 5px;
+            font-size: 1.8em; /* Larger name */
+            text-align: center;
+            text-transform: uppercase;
+            color: var(--text-color); /* Ensure H2 color */
+            letter-spacing: 1px;
+        }
+
+        .health-monitor {
+            background-color: var(--monitor-bg);
+            border: 1px solid var(--text-color);
+            border-radius: 2px; /* Sharper */
+            margin-bottom: 12px;
+            width: 100%;
+            height: 90px; /* Adjusted height */
+            overflow: hidden;
+            /* Monitor Grid Background */
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 12px 12px; /* Grid size */
+        }
+        .health-monitor svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Adjusted stroke-dasharray for original paths */
+        .health-monitor path {
+             stroke-dasharray: 3000;
+        }
+
+        /* Info Section: Status, HP, Initiative */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Two columns */
+            gap: 5px 15px; /* Row gap, Column gap */
+            margin-bottom: 10px; /* Space before controls */
+        }
+
+        .info-grid div, .info-grid p {
+            margin: 0; /* Remove default paragraph margins */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-grid label {
+            font-weight: normal; /* VT323 is bold enough */
+            margin-right: 5px;
+        }
+        .info-grid .status-text { /* Make status stand out */
+            font-size: 1.1em;
+            text-align: right;
+            font-weight: bold; /* Make status text bolder */
+        }
+        /* Make status span the full width */
+        .info-grid .status-line {
+            grid-column: 1 / -1; /* Span both columns */
+            justify-content: center; /* Center the status text */
+            padding: 3px 0;
+            border-top: 1px dashed var(--primary-color);
+            border-bottom: 1px dashed var(--primary-color);
+            margin: 5px 0;
+        }
+
+        .info-grid input[type="number"] {
+            width: 55px; /* Slightly narrower */
+            text-align: right;
+            padding: 2px 4px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            border-radius: 2px;
+            font-family: inherit;
+            font-size: 1em; /* Match body font size */
+        }
+
+        /* Controls Section */
+        .controls {
+            margin-top: auto; /* Push controls to the bottom */
+            padding-top: 10px;
+            border-top: 1px solid var(--card-border-color);
+        }
+
+        .controls div {
+            margin: 8px 0; /* Increased vertical spacing */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls input[type="number"] {
+             width: 55px;
+             text-align: right;
+             padding: 2px 4px;
+             background-color: var(--input-bg);
+             color: var(--text-color);
+             border: 1px solid var(--input-border);
+             border-radius: 2px;
+             font-family: inherit;
+             font-size: 1em;
+        }
+
+        .controls .hp-adjust button {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            font-size: 1.5em; /* Larger +/- */
+            line-height: 1;
+            margin-left: 8px;
+            cursor: pointer;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            border-radius: 2px;
+        }
+        .controls button { /* General button styling */
+             background-color: var(--input-bg);
+             color: var(--text-color);
+             border: 1px solid var(--input-border);
+             font-family: inherit;
+             font-size: 1em;
+             padding: 5px 8px;
+             border-radius: 2px;
+             cursor: pointer;
+             text-transform: uppercase; /* Uppercase button text */
+        }
+
+        .controls button:hover:not(:disabled) { /* Hover effect for non-disabled */
+            background-color: var(--primary-color);
+            color: black;
+            border-color: black;
+        }
+        .controls button:active:not(:disabled) { /* Active effect for non-disabled */
+            transform: translateY(1px);
+        }
+
+        /* --- Status-Specific Styling --- */
+        .character-card.status-dead {
+            border-color: var(--dead-color);
+            box-shadow: inset 0 0 8px 0px rgba(100,100,100, 0.5),
+                        3px 3px 8px rgba(0, 0, 0, 0.7);
+            opacity: 0.7; /* Keep opacity */
+        }
+        /* Desaturate dead card elements */
+        .character-card.status-dead h2,
+        .character-card.status-dead .info-grid,
+        .character-card.status-dead .controls,
+        .character-card.status-dead .health-monitor {
+             filter: grayscale(90%);
+        }
+        /* Ensure text remains somewhat readable when dead */
+        .character-card.status-dead,
+        .character-card.status-dead input,
+        .character-card.status-dead button,
+        .character-card.status-dead .info-grid label,
+        .character-card.status-dead .status-text
+         {
+            color: var(--dead-color);
+        }
+        .character-card.status-dead input,
+        .character-card.status-dead button {
+            border-color: var(--dead-color);
+            pointer-events: none; /* Disable interaction */
+        }
+
+        /* Add borders for other states */
+        .character-card.status-broken {
+            border-color: var(--broken-color);
+        }
+        .character-card.status-critical {
+            border-color: var(--critical-color);
+        }
+        .character-card.status-injured {
+            border-color: var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <h1>COMBAT OPERATIONS DASHBOARD</h1>
+    <div class="dashboard" id="dashboard">
+        </div>
+</div>
+
+<script>
+    // --- SVG Data Store ---
+    // Credit: SVG path data originally from Wikimedia Commons user Bron766
+    // UPDATED: Using original viewBox/paths for better vertical scale and repetition.
+    // Using preserveAspectRatio="xMinYMid slice" to fill container while maintaining aspect ratio.
+    // Adjusted base duration and stroke-dasharray values.
+    const svgStates = {
+        healthy: `<svg width="100%" height="100%" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid slice"><rect width="100%" height="100%" fill="black"/>
+             <path d="M17.902,114.475h26.949c2.296,0,12.876-10.182,20.063-10.182 c7.186,0,10.83,10.182,12.576,10.182h18.266l7.187,10.779l7.485-100.91l5.091,114.984l6.887-24.554h24.41 c3.239,0,14.816-16.769,20.206-16.769s11.08,16.47,13.475,16.47c2.845,0,26.665,0,26.665,0l27.757,0 c2.296,0,12.875-10.181,20.062-10.181c7.186,0,10.831,10.181,12.577,10.181h18.266l7.187,10.779l7.485-100.91l5.091,114.984 l6.888-24.555h24.41c3.24,0,14.817-16.768,20.207-16.768s11.079,16.469,13.474,16.469c2.845,0,26.666,0,26.666,0h27.813 c2.297,0,12.877-10.181,20.063-10.181s10.829,10.181,12.576,10.181h18.265l7.188,10.779l7.485-100.91l5.092,114.984l6.887-24.555 h24.409c3.238,0,14.816-16.768,20.206-16.768s11.08,16.469,13.476,16.469c2.845,0,26.664,0,26.664,0h27.815 c2.296,0,12.875-10.181,20.063-10.181c7.187,0,10.829,10.181,12.576,10.181h18.265l7.188,10.779l7.486-100.91l5.091,114.984 l6.887-24.555h24.409c3.238,0,14.816-16.768,20.206-16.768s11.079,16.469,13.476,16.469c2.846,0,26.664,0,26.664,0"
+                   fill="none" stroke="lime" stroke-width="2">
+                   <animate attributeName="stroke-dashoffset" from="3000" to="0" dur="5s" linear="true" repeatCount="indefinite"/>
+             </path>
+         </svg>`, // Using "Totally Fake" path (already fills 800px)
+        injured: `<svg width="100%" height="100%" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid slice"><rect width="100%" height="100%" fill="black"/>
+             <path d="M 0,114.5 h 8.7 c 1.3,0 2.5,-1.1 4.4,-1.7 0.8,-0.2 2.8,1.9 3.5,1.7 0.7,-0.2 1.1,-1.9 1.9,-1.5 2.3,1.1 2,-0.1 2.3,-0.1 0.3,0 1.6,0.6 2.3,0.8 0.7,0.2 0.7,0.1 1.5,0.3 0.8,0.2 3,-1.2 4.1,-1.1 1.1,0.1 2.1,1.1 3.7,0.9 3.7,-0.5 4.3,1.5 4.3,1.5 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 1,-34.1 3.7,-34.4 0.7,-0.1 2.2,-1.4 2.9,-1.5 0.7,0 0.6,1.1 1.3,1 0.7,-0.1 2.4,0.9 3.1,0.8 0.7,-0.1 0.4,-1.2 1,-1.3 0.7,-0.1 2.1,-0.8 2.8,-0.8 0.6,-0.1 0.4,0.5 0.9,0.4 0.5,-0.1 0.6,0.9 1.1,0.9 0.4,0 1.3,-1.1 1.6,-1.1 0.3,0 7.3,-17.9 15,-17.4 7.7,0.6 7,17.7 16.7,17.7 1.2,0 3,-1.9 3.1,-0.01 0.1,1.5 2.4,-0.7 2.9,-0.03 0.8,1.2 2.5,0.2 3.1,0.2 0.6,0 0.4,0.2 0.5,-0.3 0.4,-1.2 0.8,0 1.1,0 0.3,0 0.5,0 0.7,-0.1 0.2,0 0.3,0 0.4,-0.1 c 0.1,0 0.1,-0.01 0.1,-0.01 h 17.5 h 8.7 c 1.3,0 2.5,-1.1 4.4,-1.7 0.8,-0.2 2.8,1.9 3.5,1.7 0.7,-0.2 1.1,-1.9 1.9,-1.5 2.3,1.1 2,-0.1 2.3,-0.1 0.3,0 1.6,0.6 2.3,0.8 0.7,0.2 0.7,0.1 1.5,0.3 0.8,0.2 3,-1.2 4.1,-1.1 1.1,0.1 2.1,1.1 3.7,0.9 3.7,-0.5 4.3,1.5 4.3,1.5 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 1,-34.1 3.7,-34.4 0.7,-0.1 2.2,-1.4 2.9,-1.5 0.7,0 0.6,1.1 1.3,1 0.7,-0.1 2.4,0.9 3.1,0.8 0.7,-0.1 0.4,-1.2 1,-1.3 0.7,-0.1 2.1,-0.8 2.8,-0.8 0.6,-0.1 0.4,0.5 0.9,0.4 0.5,-0.1 0.6,0.9 1.1,0.9 0.4,0 1.3,-1.1 1.6,-1.1 0.3,0 7.3,-17.9 15,-17.4 7.7,0.6 7,17.7 16.7,17.7 1.2,0 3,-1.9 3.1,-0.01 0.1,1.5 2.4,-0.7 2.9,-0.03 0.8,1.2 2.5,0.2 3.1,0.2 0.6,0 0.4,0.2 0.5,-0.3 0.4,-1.2 0.8,0 1.1,0 0.3,0 0.5,0 0.7,-0.1 0.2,0 0.3,0 0.4,-0.1 c 0.1,0 0.1,-0.01 0.1,-0.01 h 17.5 h 8.7 c 1.3,0 2.5,-1.1 4.4,-1.7 0.8,-0.2 2.8,1.9 3.5,1.7 0.7,-0.2 1.1,-1.9 1.9,-1.5 2.3,1.1 2,-0.1 2.3,-0.1 0.3,0 1.6,0.6 2.3,0.8 0.7,0.2 0.7,0.1 1.5,0.3 0.8,0.2 3,-1.2 4.1,-1.1 1.1,0.1 2.1,1.1 3.7,0.9 3.7,-0.5 4.3,1.5 4.3,1.5 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 1,-34.1 3.7,-34.4 0.7,-0.1 2.2,-1.4 2.9,-1.5 0.7,0 0.6,1.1 1.3,1 0.7,-0.1 2.4,0.9 3.1,0.8 0.7,-0.1 0.4,-1.2 1,-1.3 0.7,-0.1 2.1,-0.8 2.8,-0.8 0.6,-0.1 0.4,0.5 0.9,0.4 0.5,-0.1 0.6,0.9 1.1,0.9 0.4,0 1.3,-1.1 1.6,-1.1 0.3,0 7.3,-17.9 15,-17.4 7.7,0.6 7,17.7 16.7,17.7 1.2,0 3,-1.9 3.1,-0.01 0.1,1.5 2.4,-0.7 2.9,-0.03 0.8,1.2 2.5,0.2 3.1,0.2 0.6,0 0.4,0.2 0.5,-0.3 0.4,-1.2 0.8,0 1.1,0 0.3,0 0.5,0 0.7,-0.1 0.2,0 0.3,0 0.4,-0.1 c 0.1,0 0.1,-0.01 0.1,-0.01 h 17.5 h 8.7 c 1.3,0 2.5,-1.1 4.4,-1.7 0.8,-0.2 2.8,1.9 3.5,1.7 0.7,-0.2 1.1,-1.9 1.9,-1.5 2.3,1.1 2,-0.1 2.3,-0.1 0.3,0 1.6,0.6 2.3,0.8 0.7,0.2 0.7,0.1 1.5,0.3 0.8,0.2 3,-1.2 4.1,-1.1 1.1,0.1 2.1,1.1 3.7,0.9 3.7,-0.5 4.3,1.5 4.3,1.5 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 1,-34.1 3.7,-34.4 0.7,-0.1 2.2,-1.4 2.9,-1.5 0.7,0 0.6,1.1 1.3,1 0.7,-0.1 2.4,0.9 3.1,0.8 0.7,-0.1 0.4,-1.2 1,-1.3 0.7,-0.1 2.1,-0.8 2.8,-0.8 0.6,-0.1 0.4,0.5 0.9,0.4 0.5,-0.1 0.6,0.9 1.1,0.9 0.4,0 1.3,-1.1 1.6,-1.1 0.3,0 7.3,-17.9 15,-17.4 7.7,0.6 7,17.7 16.7,17.7 1.2,0 3,-1.9 3.1,-0.01 0.1,1.5 2.4,-0.7 2.9,-0.03 0.8,1.2 2.5,0.2 3.1,0.2 0.6,0 0.4,0.2 0.5,-0.3 0.4,-1.2 0.8,0 1.1,0 0.3,0 0.5,0 0.7,-0.1 0.2,0 0.3,0 0.4,-0.1 c 0.1,0 0.1,-0.01 0.1,-0.01 h 17.5 h 8.7 c 1.3,0 2.5,-1.1 4.4,-1.7 0.8,-0.2 2.8,1.9 3.5,1.7 0.7,-0.2 1.1,-1.9 1.9,-1.5 2.3,1.1 2,-0.1 2.3,-0.1 0.3,0 1.6,0.6 2.3,0.8 0.7,0.2 0.7,0.1 1.5,0.3 0.8,0.2 3,-1.2 4.1,-1.1 1.1,0.1 2.1,1.1 3.7,0.9 3.7,-0.5 4.3,1.5 4.3,1.5 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 1,-34.1 3.7,-34.4 0.7,-0.1 2.2,-1.4 2.9,-1.5 0.7,0 0.6,1.1 1.3,1 0.7,-0.1 2.4,0.9 3.1,0.8 0.7,-0.1 0.4,-1.2 1,-1.3 0.7,-0.1 2.1,-0.8 2.8,-0.8 0.6,-0.1 0.4,0.5 0.9,0.4 0.5,-0.1 0.6,0.9 1.1,0.9 0.4,0 1.3,-1.1 1.6,-1.1 0.3,0 7.3,-17.9 15,-17.4 7.7,0.6 7,17.7 16.7,17.7 1.2,0 3,-1.9 3.1,-0.01 0.1,1.5 2.4,-0.7 2.9,-0.03 0.8,1.2 2.5,0.2 3.1,0.2 0.6,0 0.4,0.2 0.5,-0.3 0.4,-1.2 0.8,0 1.1,0 0.3,0 0.5,0 0.7,-0.1 0.2,0 0.3,0 0.4,-0.1 c 0.1,0 0.1,-0.01 0.1,-0.01 h 17.5"
+                  fill="none" stroke="#FFD700" stroke-width="2"> <animate attributeName="stroke-dashoffset" from="3000" to="0" dur="5s" linear="true" repeatCount="indefinite"/>
+             </path>
+         </svg>`, // Reconstructed continuous path based on Absent_P_waves
+        critical: `<svg width="100%" height="100%" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid slice"><rect width="100%" height="100%" fill="black"/>
+             <path d="M 0,114.5 h 11.5 c 5.2,0 3.8,-7 8.1,-6.7 4.3,0.3 1.9,7.7 8.2,7 3.7,-0.5 5.2,0.9 5.2,0.9 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 2.2,-28.6 3.9,-35 1.7,-6.4 3,-23.8 7.6,-30.8 c 4,-6.1 8.8,-10 12.3,-8.6 c 3.5,1.4 6.5,15.2 9.7,21 c 3.2,5.9 7,17.7 16.7,17.7 c 9.8,0 11.9,-0.3 11.9,-0.3 h 17.9 h 11.5 c 5.2,0 3.8,-7 8.1,-6.7 4.3,0.3 1.9,7.7 8.2,7 c 3.7,-0.5 5.2,0.9 5.2,0.9 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 2.2,-28.6 3.9,-35 c 1.7,-6.4 3,-23.8 7.6,-30.8 c 4,-6.1 8.8,-10 12.3,-8.6 c 3.5,1.4 6.5,15.2 9.7,21 c 3.2,5.9 7,17.7 16.7,17.7 c 9.8,0 11.9,-0.3 11.9,-0.3 h 17.9 h 11.5 c 5.2,0 3.8,-7 8.1,-6.7 4.3,0.3 1.9,7.7 8.2,7 c 3.7,-0.5 5.2,0.9 5.2,0.9 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 2.2,-28.6 3.9,-35 c 1.7,-6.4 3,-23.8 7.6,-30.8 c 4,-6.1 8.8,-10 12.3,-8.6 c 3.5,1.4 6.5,15.2 9.7,21 c 3.2,5.9 7,17.7 16.7,17.7 c 9.8,0 11.9,-0.3 11.9,-0.3 h 17.9 h 11.5 c 5.2,0 3.8,-7 8.1,-6.7 4.3,0.3 1.9,7.7 8.2,7 c 3.7,-0.5 5.2,0.9 5.2,0.9 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 2.2,-28.6 3.9,-35 c 1.7,-6.4 3,-23.8 7.6,-30.8 c 4,-6.1 8.8,-10 12.3,-8.6 c 3.5,1.4 6.5,15.2 9.7,21 c 3.2,5.9 7,17.7 16.7,17.7 c 9.8,0 11.9,-0.3 11.9,-0.3 h 17.9 h 11.5 c 5.2,0 3.8,-7 8.1,-6.7 4.3,0.3 1.9,7.7 8.2,7 c 3.7,-0.5 5.2,0.9 5.2,0.9 l 2.6,4.8 3.9,-66 1.2,95.8 c 0,0 2.2,-28.6 3.9,-35 c 1.7,-6.4 3,-23.8 7.6,-30.8 c 4,-6.1 8.8,-10 12.3,-8.6 c 3.5,1.4 6.5,15.2 9.7,21 c 3.2,5.9 7,17.7 16.7,17.7 c 9.8,0 11.9,-0.3 11.9,-0.3 h 17.9"
+                  fill="none" stroke="#FF851B" stroke-width="2"> <animate attributeName="stroke-dashoffset" from="3000" to="0" dur="5s" linear="true" repeatCount="indefinite"/>
+             </path>
+         </svg>`, // Reconstructed continuous path based on Sttomb
+        broken: `<svg width="100%" height="100%" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid slice"><rect width="100%" height="100%" fill="black"/>
+             <path d="M0,100 H800" fill="none" stroke="#FF4136" stroke-width="4">  <animate attributeName="stroke-dashoffset" from="800" to="0" dur="1.8s" linear="true" repeatCount="indefinite"/>
+             </path>
+         </svg>`, // Flatline
+        dead: `<svg width="100%" height="100%" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid slice"><rect width="100%" height="100%" fill="black"/>
+            <path d="M0,100 H800" fill="none" stroke="#555555" stroke-width="4">
+                 </path>
+         </svg>`,
+    };
+
+    // --- Character Data Store ---
+    let characters = {
+        char1: {
+            name: "HUDSON",
+            hpMax: 10,
+            hpCurrent: 10,
+            initiative: 8,
+            status: "Healthy",
+            svgStateKey: 'healthy'
+        },
+        npc1: {
+            name: "APONE",
+            hpMax: 12,
+            hpCurrent: 12,
+            initiative: 7,
+            status: "Healthy",
+            svgStateKey: 'healthy'
+        },
+        xeno1: {
+            name: "STALKER",
+            hpMax: 15,
+            hpCurrent: 15,
+            initiative: 10,
+            status: "Healthy",
+            svgStateKey: 'healthy'
+        },
+         char2: {
+            name: "VASQUEZ",
+            hpMax: 11,
+            hpCurrent: 5, // Start injured
+            initiative: 9,
+            status: "Injured",
+            svgStateKey: 'injured'
+        },
+    };
+
+    // --- Functions ---
+
+    /**
+     * Helper function to set animation speed dynamically
+     */
+     function setAnimationSpeed(monitorElement, characterData) {
+         const animateElement = monitorElement.querySelector('svg path animate');
+         if (animateElement) {
+             let targetDuration = '5s'; // Default for healthy
+             switch (characterData.status.toLowerCase()) {
+                 case 'injured':  targetDuration = '4s'; break;   // Faster
+                 case 'critical': targetDuration = '2.8s'; break;  // Much Faster
+                 case 'broken':   targetDuration = '2.5s'; break;  // Broken animation speed
+             }
+             // Set duration if needed
+             // Check current attribute value before setting to avoid unnecessary restarts/reflows
+             if (animateElement.getAttribute('dur') !== targetDuration) {
+                 animateElement.setAttribute('dur', targetDuration);
+                 console.log(`Set ${characterData.name} (${characterData.status}) animation duration to ${targetDuration}`);
+             }
+         }
+     }
+
+    /**
+     * Updates the display elements within a single character card based on data.
+     */
+    function renderCharacterCard(charId) {
+        const character = characters[charId];
+        const card = document.getElementById(charId);
+        if (!character || !card) {
+            console.error(`Could not render card for ID: ${charId}`);
+            return;
+        };
+
+        // --- Update card status class ---
+        const statuses = ['healthy', 'injured', 'critical', 'broken', 'dead'];
+        statuses.forEach(s => card.classList.remove(`status-${s}`));
+        if (character.status) {
+             card.classList.add(`status-${character.status.toLowerCase()}`);
+        }
+
+        // Update text elements
+        card.querySelector('.char-name').textContent = character.name.toUpperCase();
+        card.querySelector('.status-text').textContent = character.status.toUpperCase();
+
+        // Update input fields (check focus)
+        const maxHpInput = card.querySelector('.input-hp-max');
+        if (document.activeElement !== maxHpInput) maxHpInput.value = character.hpMax;
+        const currentHpInput = card.querySelector('.input-hp-current');
+         if (document.activeElement !== currentHpInput) currentHpInput.value = character.hpCurrent;
+         const initiativeInput = card.querySelector('.input-initiative');
+         if (document.activeElement !== initiativeInput) initiativeInput.value = character.initiative;
+
+        // --- Update health monitor SVG ---
+        const monitor = card.querySelector('.health-monitor');
+        const svgKey = character.svgStateKey;
+
+        // Update SVG content only if the key has changed
+        if (monitor.dataset.currentSvgKey !== svgKey) {
+            // Use rAF to defer DOM manipulation slightly, can help smoothness
+            requestAnimationFrame(() => {
+                 // Check if monitor still exists (e.g., if multiple updates happen quickly)
+                 if(document.getElementById(charId)) {
+                     monitor.innerHTML = svgStates[svgKey] || svgStates['healthy'];
+                     monitor.dataset.currentSvgKey = svgKey;
+                     // Set animation speed AFTER new SVG is definitely in the DOM
+                     setAnimationSpeed(monitor, character);
+                 }
+            });
+        } else {
+            // If SVG type hasn't changed, still check if speed needs updating
+             setAnimationSpeed(monitor, character);
+        }
+    }
+
+     /**
+     * Creates the HTML structure for a single character card.
+     */
+    function createCharacterCardElement(charId) {
+         const character = characters[charId];
+         if (!character) {
+             console.error(`Character data not found for ID: ${charId}`);
+             return null;
+         }
+         const card = document.createElement('div');
+         card.className = 'character-card'; // Base class
+         card.id = charId;
+
+         if (character.status) {
+             card.classList.add(`status-${character.status.toLowerCase()}`);
+         }
+
+         card.innerHTML = `
+            <h2 class="char-name">${character.name.toUpperCase()}</h2>
+            <div class="health-monitor" data-current-svg-key=""> </div>
+            <div class="info-grid">
+                 <div class="status-line">
+                    <label>STATUS:</label>
+                    <span class="status-text">${character.status.toUpperCase()}</span>
+                 </div>
+                 <div>
+                    <label for="max-hp-${charId}">HP MAX:</label>
+                    <input type="number" id="max-hp-${charId}" class="input-hp-max" value="${character.hpMax}" min="1" onchange="updateStatus('${charId}', 'setMaxHp', this.value)">
+                 </div>
+                 <div>
+                    <label for="init-${charId}">INIT:</label>
+                    <input type="number" id="init-${charId}" class="input-initiative" value="${character.initiative}" min="1" max="10" onchange="updateStatus('${charId}', 'setInitiative', this.value)">
+                 </div>
+            </div>
+            <div class="controls">
+                 <div class="hp-direct-set">
+                    <label for="current-hp-${charId}">HP CURRENT:</label>
+                    <input type="number" id="current-hp-${charId}" class="input-hp-current" value="${character.hpCurrent}" min="0" onchange="updateStatus('${charId}', 'setCurrentHp', this.value)">
+                 </div>
+                 <div class="hp-adjust">
+                     <label>ADJUST:</label>
+                     <span>
+                        <button onclick="updateStatus('${charId}', 'decrementHp', 1)" title="Decrease HP by 1">-</button>
+                        <button onclick="updateStatus('${charId}', 'incrementHp', 1)" title="Increase HP by 1">+</button>
+                    </span>
+                 </div>
+                 <div>
+                    <button onclick="updateStatus('${charId}', 'setDead', true)" title="Mark character as Dead">MARK DEAD</button>
+                 </div>
+            </div>
+        `;
+         return card;
+     }
+
+    /**
+     * Sorts characters by initiative and renders all cards to the dashboard.
+     */
+    function renderDashboard() {
+        const dashboardElement = document.getElementById('dashboard');
+        if (!dashboardElement) {
+            console.error("Dashboard element not found!");
+            return;
+        }
+        dashboardElement.innerHTML = ''; // Clear existing cards
+
+        const sortedCharIds = Object.keys(characters).sort((a, b) => {
+            const initA = Number(characters[a]?.initiative) || 0;
+            const initB = Number(characters[b]?.initiative) || 0;
+            return initB - initA;
+        });
+
+        sortedCharIds.forEach(charId => {
+            const cardElement = createCharacterCardElement(charId);
+            if (cardElement) {
+                dashboardElement.appendChild(cardElement);
+                renderCharacterCard(charId); // Render details AFTER element is in DOM
+            }
+        });
+    }
+
+    /**
+     * Central function to update character data and trigger redraws.
+     */
+    function updateStatus(charId, action, value) {
+        const character = characters[charId];
+        if (!character) {
+            console.error(`Update failed: Character ID ${charId} not found.`);
+            return;
+        }
+
+        // Prevent most updates if dead
+        if (character.status === 'Dead' && !['setInitiative', 'setMaxHp', 'setCurrentHp'].includes(action)) { // Allow setting HP/MaxHP even if dead? Maybe for revive later. Let's disallow HP changes for now.
+             if (!['setInitiative', 'setMaxHp'].includes(action)) {
+                console.log(`${character.name} is Dead. No changes allowed except Initiative/MaxHP.`);
+                // Revert input value if user tried changing forbidden field
+                if (action === 'setCurrentHp') {
+                    const inputElement = document.getElementById(`current-hp-${charId}`);
+                    if (inputElement) inputElement.value = character.hpCurrent; // Revert to 0
+                }
+                return;
+             }
+        }
+
+        let needsDashboardSort = false;
+        const previousStatus = character.status;
+        const previousSvgStateKey = character.svgStateKey;
+
+        switch (action) {
+             case 'setMaxHp':
+                 const newMaxHp = parseInt(value, 10);
+                 if (!isNaN(newMaxHp) && newMaxHp >= 1) {
+                     character.hpMax = newMaxHp;
+                     // If current HP exceeds new max, clamp it (even if dead, for consistency)
+                     character.hpCurrent = Math.min(character.hpCurrent, character.hpMax);
+                     // If NOT dead, and clamping HP changed status, update status below
+                 } else {
+                     console.warn(`Invalid Max HP value: ${value}`);
+                     const inputElement = document.getElementById(`max-hp-${charId}`);
+                     if (inputElement) inputElement.value = character.hpMax; // Revert input
+                 }
+                 break;
+             case 'setCurrentHp':
+                 const newCurrentHp = parseInt(value, 10);
+                 if (!isNaN(newCurrentHp)) {
+                      if (character.status === 'Dead') { // Don't allow direct HP change if Dead
+                         console.log("Cannot set HP on a Dead character.");
+                          const inputElement = document.getElementById(`current-hp-${charId}`);
+                          if (inputElement) inputElement.value = character.hpCurrent; // Revert to 0
+                          break;
+                      }
+                     character.hpCurrent = Math.max(0, Math.min(newCurrentHp, character.hpMax));
+                 } else {
+                     console.warn(`Invalid Current HP value: ${value}`);
+                     const inputElement = document.getElementById(`current-hp-${charId}`);
+                     if (inputElement) inputElement.value = character.hpCurrent; // Revert input
+                 }
+                 break;
+             case 'incrementHp':
+                  if (character.status === 'Dead' || character.status === 'Broken') {
+                      console.log(`${character.name} is ${character.status}, cannot increment HP.`);
+                      break;
+                  }
+                 character.hpCurrent = Math.min(character.hpMax, character.hpCurrent + 1);
+                 break;
+             case 'decrementHp':
+                  if (character.status === 'Dead') break;
+                 character.hpCurrent = Math.max(0, character.hpCurrent - 1);
+                 break;
+            case 'setInitiative':
+                const newInitiative = parseInt(value, 10);
+                if (!isNaN(newInitiative) && newInitiative >= 1 && newInitiative <= 10) {
+                    if(character.initiative !== newInitiative) {
+                        character.initiative = newInitiative;
+                        needsDashboardSort = true;
+                    }
+                } else {
+                     console.warn(`Invalid Initiative value: ${value}`);
+                     const inputElement = document.getElementById(`init-${charId}`);
+                     if (inputElement) inputElement.value = character.initiative; // Revert input
+                }
+                break;
+             case 'setDead':
+                 if (character.status !== 'Dead') {
+                     character.status = 'Dead';
+                     character.hpCurrent = 0;
+                     character.svgStateKey = 'dead';
+                     console.log(`${character.name} marked as Dead.`);
+                 }
+                 break;
+        }
+
+        // --- Determine Status and SVG state based on current HP (unless explicitly set Dead) ---
+        if (character.status !== 'Dead') {
+            const hpPercentage = character.hpMax > 0 ? (character.hpCurrent / character.hpMax) * 100 : 0;
+            let calculatedStatus = "Healthy"; // Default assumption
+            let calculatedSvgKey = "healthy";
+
+            if (character.hpCurrent <= 0) {
+                 calculatedStatus = 'Broken';
+                 calculatedSvgKey = 'broken';
+                 if (previousStatus !== 'Broken') {
+                     console.log(`${character.name} is Broken!`);
+                 }
+            } else if (hpPercentage <= 33) {
+                calculatedStatus = 'Critical';
+                calculatedSvgKey = 'critical';
+            } else if (hpPercentage <= 66) {
+                calculatedStatus = 'Injured';
+                calculatedSvgKey = 'injured';
+            }
+             // Only update if calculated state is different
+             if(character.status !== calculatedStatus) {
+                 character.status = calculatedStatus;
+             }
+             if(character.svgStateKey !== calculatedSvgKey) {
+                 character.svgStateKey = calculatedSvgKey;
+             }
+
+             // Check if character was revived from Broken state
+             if (previousStatus === 'Broken' && character.hpCurrent > 0) {
+                 console.log(`${character.name} is no longer Broken.`);
+             }
+        } else { // Ensure Dead state is locked
+             character.svgStateKey = 'dead';
+             if (character.hpCurrent !== 0) character.hpCurrent = 0; // Force HP to 0 if Dead
+        }
+
+
+        // --- Trigger Re-render ---
+        if (needsDashboardSort) {
+            renderDashboard(); // Re-sort and render the whole dashboard if initiative changed
+        } else {
+            // Request update for the specific card
+             renderCharacterCard(charId);
+        }
+    }
+
+    // --- Initial Render ---
+    document.addEventListener('DOMContentLoaded', renderDashboard);
+
+</script>
+
+</body>
+</html>
