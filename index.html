@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Angry Static's Map Generator (v6 - Data Fix)</title> <style>
+    <title>Angry Static's Map Generator (v8 - Dblclick Edit & Grid Layout)</title>
+    <style>
         /* Basic styling */
         body {
             font-family: 'Consolas', 'Courier New', monospace;
@@ -91,6 +92,8 @@
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
+            overflow: hidden; /* Hide text overflow by default */
+            white-space: normal; /* Allow wrapping conceptually, but limited by height */
         }
         .zone.dragging { /* Style for when dragging */
             cursor: grabbing;
@@ -98,6 +101,25 @@
             z-index: 1000; /* Ensure dragged element is on top */
             border-style: dashed;
         }
+
+        /* --- Style for zones actively being edited --- */
+        .zone.editing {
+            background-color: rgba(80, 100, 80, 0.9); /* Slightly lighter background */
+            border-color: #fff; /* White border */
+            outline: 1px solid #eee; /* Subtle outline */
+            /* cursor: text; */ /* Let focus handle this */
+            overflow: visible; /* Allow text to overflow box when editing */
+            white-space: normal; /* Allow wrapping during edit */
+            z-index: 1001; /* Ensure editable text is on top */
+            user-select: text; /* Allow text selection during edit */
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+        .zone.editing:focus { /* Style when focused *while* editing */
+             cursor: text; /* Explicitly text cursor */
+        }
+
 
         /* Specific styles based on type */
         .zone-Technical { border-color: #ffaa6a; background-color: rgba(90, 70, 50, 0.7); }
@@ -121,16 +143,48 @@
         #legend li { display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
         .legend-box { display: inline-block; width: 20px; height: 15px; border: 1px solid #ccc; vertical-align: middle; }
         .legend-line { display: inline-block; width: 25px; height: 4px; border: none; vertical-align: middle; }
-        .zone-normal-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; } .zone-major-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; border-width: 2px; } .zone-Command-example { background-color: rgba(70, 90, 70, 0.8); border-color: #6acF70; } .zone-Medical-example { background-color: rgba(50, 50, 90, 0.7); border-color: #6a6aff; } .zone-Technical-example { background-color: rgba(90, 70, 50, 0.7); border-color: #ffaa6a; } .zone-Habitation-example { background-color: rgba(70, 70, 90, 0.7); border-color: #aaaaff; } .zone-Security-example { background-color: rgba(90, 60, 60, 0.7); border-color: #ff7777; } .zone-Access-example { background-color: rgba(60, 60, 60, 0.7); border-color: #aaaaaa; } .zone-Amenity-example { background-color: rgba(90, 90, 60, 0.7); border-color: #ffff99; } .zone-Cargo-example { background-color: rgba(90, 75, 50, 0.7); border-color: #ffa500; } .zone-Science-example { background-color: rgba(60, 80, 90, 0.7); border-color: #87ceeb; } .zone-Military-example { background-color: rgba(60, 90, 60, 0.7); border-color: #90ee90; } .zone-Damaged-example { background-color: rgba(90, 50, 50, 0.7); border-color: #ff4444; } .connector-corridor-example { background-color: rgba(76, 175, 80, 0.6); height: 4px; } .connector-vent-example { height: 2px; background: repeating-linear-gradient( 90deg, rgba(100, 100, 150, 0.7), rgba(100, 100, 150, 0.7) 5px, transparent 5px, transparent 10px ); }
+        .zone-normal-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; } .zone-major-example { background-color: rgba(50, 70, 50, 0.7); border-color: #4CAF50; border-width: 2px; } .zone-Command-example { background-color: rgba(70, 90, 70, 0.8); border-color: #6acF70; } .zone-Medical-example { background-color: rgba(50, 50, 90, 0.7); border-color: #6a6aff; } .zone-Technical-example { background-color: rgba(90, 70, 50, 0.7); border-color: #ffaa6a; } .zone-Habitation-example { background-color: rgba(70, 70, 90, 0.7); border-color: #aaaaff; } .zone-Security-example { background-color: rgba(90, 60, 60, 0.7); border-color: #ff7777; } .zone-Access-example { background-color: rgba(60, 60, 60, 0.7); border-color: #aaaaaa; } .zone-Amenity-example { background-color: rgba(90, 90, 60, 0.7); border-color: #ffff99; } .zone-Cargo-example { background-color: rgba(90, 75, 50, 0.7); border-color: #ffa500; } .zone-Industrial-example { background-color: rgba(70, 65, 60, 0.7); border-color: #b0a090; } .zone-Science-example { background-color: rgba(60, 80, 90, 0.7); border-color: #87ceeb; } .zone-Military-example { background-color: rgba(60, 90, 60, 0.7); border-color: #90ee90; } .zone-Damaged-example { background-color: rgba(90, 50, 50, 0.7); border-color: #ff4444; } .connector-corridor-example { background-color: rgba(76, 175, 80, 0.6); height: 4px; } .connector-vent-example { height: 2px; background: repeating-linear-gradient( 90deg, rgba(100, 100, 150, 0.7), rgba(100, 100, 150, 0.7) 5px, transparent 5px, transparent 10px ); }
 
     </style>
 </head>
 <body>
 
-    <h1>Angry Static's &quot;Map&quot; Generator (v6 - Data Fix)</h1> <div class="controls">
-        <div> <label for="facility-type">Type:</label> <select id="facility-type"> <option value="Colony">Colony</option> <option value="Station">Station</option> <option value="Ship">Ship</option> <option value="Outpost">Outpost</option> <option value="Military">Military Base</option> <option value="Science">Science Outpost</option> <option value="DerelictShip">Derelict Ship</option> </select> </div>
-        <div> <label for="facility-size">Size:</label> <select id="facility-size"> <option value="Small">Small</option> <option value="Medium" selected>Medium</option> <option value="Large">Large</option> </select> </div>
-        <div> <label for="layout-algorithm">Layout:</label> <select id="layout-algorithm"> <option value="ForceDirected" selected>Force-Directed</option> <option value="Circle">Circle</option> <option value="Square">Square</option> <option value="Plus">Plus</option> <option value="CShape">C-Shape</option> <option value="HShape">H-Shape</option> <option value="LShape">L-Shape</option> </select> </div>
+    <h1>Angry Static's &quot;Map&quot; Generator (v8 - Dblclick Edit & Grid Layout)</h1>
+
+    <div class="controls">
+        <div>
+            <label for="facility-type">Type:</label>
+            <select id="facility-type">
+                <option value="Colony">Colony</option>
+                <option value="Station">Station</option>
+                <option value="Ship">Ship</option>
+                <option value="Outpost">Outpost</option>
+                <option value="Military">Military Base</option>
+                <option value="Science">Science Outpost</option>
+                <option value="DerelictShip">Derelict Ship</option>
+            </select>
+        </div>
+        <div>
+            <label for="facility-size">Size:</label>
+            <select id="facility-size">
+                <option value="Small">Small</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Large">Large</option>
+            </select>
+        </div>
+        <div>
+            <label for="layout-algorithm">Layout:</label>
+            <select id="layout-algorithm">
+                <option value="ForceDirected" selected>Force-Directed</option>
+                <option value="Circle">Circle</option>
+                <option value="Square">Square</option>
+                <option value="Plus">Plus</option>
+                <option value="CShape">C-Shape</option>
+                <option value="HShape">H-Shape</option>
+                <option value="LShape">L-Shape</option>
+                <option value="Grid">Grid</option>
+            </select>
+        </div>
         <button id="generate-graph-map">Generate Graph Map</button>
     </div>
 
@@ -138,24 +192,24 @@
         </div>
 
     <div id="legend">
-        <h4>Legend</h4>
-        <ul>
-            <li><span class="legend-box zone-normal-example"></span> Normal Zone</li>
-            <li><span class="legend-box zone-major-example"></span> Major Zone</li>
-            <li><span class="legend-line connector-corridor-example"></span> Corridor</li>
-            <li><span class="legend-line connector-vent-example"></span> Vent / Duct</li>
-            <li><span class="legend-box zone-Command-example"></span> Command</li>
-            <li><span class="legend-box zone-Medical-example"></span> Medical</li>
-            <li><span class="legend-box zone-Technical-example"></span> Technical</li>
-            <li><span class="legend-box zone-Habitation-example"></span> Habitation</li>
-            <li><span class="legend-box zone-Security-example"></span> Security</li>
-            <li><span class="legend-box zone-Access-example"></span> Access</li>
-            <li><span class="legend-box zone-Amenity-example"></span> Amenity</li>
-            <li><span class="legend-box zone-Cargo-example"></span> Cargo/Ind.</li>
-            <li><span class="legend-box zone-Science-example"></span> Science</li>
-            <li><span class="legend-box zone-Military-example"></span> Military</li>
-            <li><span class="legend-box zone-Damaged-example"></span> Damaged</li>
-        </ul>
+         <h4>Legend</h4>
+         <ul>
+             <li><span class="legend-box zone-normal-example"></span> Normal Zone</li>
+             <li><span class="legend-box zone-major-example"></span> Major Zone</li>
+             <li><span class="legend-line connector-corridor-example"></span> Corridor</li>
+             <li><span class="legend-line connector-vent-example"></span> Vent / Duct</li>
+             <li><span class="legend-box zone-Command-example"></span> Command</li>
+             <li><span class="legend-box zone-Medical-example"></span> Medical</li>
+             <li><span class="legend-box zone-Technical-example"></span> Technical</li>
+             <li><span class="legend-box zone-Habitation-example"></span> Habitation</li>
+             <li><span class="legend-box zone-Security-example"></span> Security</li>
+             <li><span class="legend-box zone-Access-example"></span> Access</li>
+             <li><span class="legend-box zone-Amenity-example"></span> Amenity</li>
+             <li><span class="legend-box zone-Cargo-example"></span> Cargo/Ind.</li>
+             <li><span class="legend-box zone-Science-example"></span> Science</li>
+             <li><span class="legend-box zone-Military-example"></span> Military</li>
+             <li><span class="legend-box zone-Damaged-example"></span> Damaged</li>
+         </ul>
     </div>
 
 
@@ -168,7 +222,6 @@
             layoutAlgorithmSelect = document.getElementById('layout-algorithm');
             generateButton = document.getElementById('generate-graph-map');
             mapContainer = document.getElementById('map-container');
-
             if (!facilityTypeSelect || !facilitySizeSelect || !layoutAlgorithmSelect || !generateButton || !mapContainer) {
                 throw new Error("One or more essential HTML elements not found!");
             }
@@ -176,11 +229,13 @@
         } catch (error) {
             console.error("FATAL ERROR getting DOM elements:", error);
             const body = document.querySelector('body');
-            if (body) { body.innerHTML = `<p style="color:red; font-size: 1.2em; padding: 20px;">FATAL ERROR: Could not initialize page elements. ${error.message}</p>`; }
+            if (body) {
+                body.innerHTML = `<p style="color:red; font-size: 1.2em; padding: 20px;">FATAL ERROR: Could not initialize page elements. ${error.message}</p>`;
+            }
         }
 
-        // --- Data Definitions (SINGLE, CORRECTED DEFINITION) ---
-        // *** The erroneous first declaration has been REMOVED ***
+
+        // --- Data Definitions ---
         const facilityData = {
             Colony: { core: [ { name: 'Command/Admin', type: 'Command'}, { name: 'Habitation Blocks', type: 'Habitation'}, { name: 'Medbay', type: 'Medical'}, { name: 'Engineering (Power/Life Support)', type: 'Technical'}, { name: 'Atmosphere Processing', type: 'Technical'}, { name: 'Cargo/Industrial Zone', type: 'Cargo'} ], optional: [ { name: 'Security Post', type: 'Security'}, { name: 'Main Communications', type: 'Technical'}, { name: 'Mining Control', type: 'Industrial'}, { name: 'Hydroponics', type: 'Amenity'}, { name: 'Vehicle Bay', type: 'Access'}, { name: 'Recreation Zone', type: 'Amenity'}, { name: 'Marketplace', type: 'Amenity'}, { name: 'Large Mess Hall', type: 'Amenity'} ] },
             Station: { core: [ { name: 'Command Center', type: 'Command'}, { name: 'Habitation Ring', type: 'Habitation'}, { name: 'Medbay', type: 'Medical'}, { name: 'Engineering Core', type: 'Technical'}, { name: 'Docking Bay(s)', type: 'Access'}, { name: 'Cargo Hold', type: 'Cargo'}, { name: 'Life Support Center', type: 'Technical'} ], optional: [ { name: 'Science Labs', type: 'Science'}, { name: 'Security Hub', type: 'Security'}, { name: 'Recreation Area', type: 'Amenity'}, { name: 'Customs Checkpoint', type: 'Security'}, { name: 'Observation Deck', type: 'Amenity'}, { name: 'Shuttle Bay', type: 'Access'}, { name: 'Trade Hub Market', type: 'Amenity'}, { name: 'Bar/Cantina', type: 'Amenity'} ] },
@@ -190,18 +245,20 @@
             Science: { core: [ { name: 'Main Lab Complex', type: 'Science'}, { name: 'Admin/Observation', type: 'Command'}, { name: 'Specimen Storage', type: 'Science'}, { name: 'Small Habitation Pod', type: 'Habitation'}, { name: 'Life Support/Generator', type: 'Technical'}, { name: 'Sample Intake/Airlock', type: 'Access'} ], optional: [ { name: 'Quarantine Lab', type: 'Medical'}, { name: 'Advanced Sensor Array', type: 'Technical'}, { name: 'Data Archive/Library', type: 'Science'}, { name: 'Small Workshop', type: 'Technical'}, { name: 'Hydroponics Lab', type: 'Science'}, { name: 'Recreation/Mess Pod', type: 'Amenity'}, { name: 'Emergency Shelter', type: 'Habitation'} ] },
             DerelictShip: { core: [ { name: 'Damaged Bridge', type: 'Damaged'}, { name: 'Breached Crew Quarters', type: 'Damaged'}, { name: 'Offline Engineering', type: 'Damaged'}, { name: 'Flooded Cargo Bay', type: 'Damaged'}, { name: 'Compromised Airlock', type: 'Damaged'}, { name: 'Flickering Life Support', type: 'Damaged'} ], optional: [ { name: 'Makeshift Medbay', type: 'Medical'}, { name: 'Scavenger\'s Stash', type: 'Cargo'}, { name: 'Xeno Nest Area', type: 'Damaged'}, { name: 'Barricaded Section', type: 'Security'}, { name: 'Exposed Service Ducts', type: 'Access'}, { name: 'Cryo Bay (Malfunctioning)', type: 'Damaged'}, { name: 'Wreckage Field Access', type: 'Access'}, { name: 'Unknown Signal Source', type: 'Science'} ] }
         };
+
         // --- Keyword Definitions ---
-        const habitationKeywords = ['Habitation', 'Quarters', 'Barracks', 'Ring', 'Cryosleep'];
-        const amenityKeywords = ['Mess', 'Recreation', 'Marketplace', 'Gym', 'Bar', 'Cantina', 'Observation', 'Chapel', 'Shrine', 'Education', 'Rec Room', 'Trade Hub', 'Hydroponics'];
-        const technicalKeywords = ['Engineering', 'Generator', 'Power', 'Life Support', 'Atmosphere', 'Maintenance', 'Worksh', 'Lab', 'Scanner', 'Server', 'Comms', 'Technical', 'Ventilation', 'Science', 'Sensor'];
-        const commandKeywords = ['Command', 'Bridge', 'Ops', 'Admin'];
-        const accessKeywords = ['Airlock', 'Docking', 'Bay', 'Access', 'Shuttle', 'Landing Zone', 'Vehicle', 'Hangar', 'Motor Pool'];
-        const securityKeywords = ['Security', 'Armory', 'Brig', 'Checkpoint', 'Holding Cells', 'Defenses', 'Watchtower'];
-        const cargoKeywords = ['Cargo', 'Industrial', 'Storage', 'Mining', 'Manufacturing', 'Stash'];
-        const majorZoneKeywords = ['Habitation', 'Command', 'Bridge', 'Engineering', 'Cargo', 'Docking', 'Ops', 'Industrial', 'Ring', 'Deck', 'Blocks', 'Center', 'Core', 'Bay(s)', 'Complex', 'Hangar', 'Pool'];
-        const scienceKeywords = ['Science', 'Lab', 'Specimen', 'Archive', 'Sensor', 'Quarantine', 'Data'];
-        const militaryKeywords = ['Military', 'Ready Room', 'Firing Range'];
+        const habitationKeywords = ['Habitation', 'Quarters', 'Barracks', 'Ring', 'Cryosleep', 'Pod', 'Shelter'];
+        const amenityKeywords = ['Mess', 'Recreation', 'Marketplace', 'Gym', 'Bar', 'Cantina', 'Observation', 'Chapel', 'Shrine', 'Education', 'Rec Room', 'Trade Hub', 'Hydroponics', 'Amenity'];
+        const technicalKeywords = ['Engineering', 'Generator', 'Power', 'Life Support', 'Atmosphere', 'Maintenance', 'Workshop', 'Scanner', 'Server', 'Comms', 'Technical', 'Ventilation', 'Sensor', 'Relay'];
+        const commandKeywords = ['Command', 'Bridge', 'Ops', 'Admin', 'CIC', 'Center'];
+        const accessKeywords = ['Airlock', 'Docking', 'Bay', 'Access', 'Shuttle', 'Landing Zone', 'Vehicle', 'Hangar', 'Motor Pool', 'Intake', 'Perimeter', 'Ducts'];
+        const securityKeywords = ['Security', 'Armory', 'Brig', 'Checkpoint', 'Holding Cells', 'Defenses', 'Watchtower', 'Barricaded', 'Post'];
+        const cargoKeywords = ['Cargo', 'Industrial', 'Storage', 'Mining', 'Manufacturing', 'Stash', 'Hold', 'Zone'];
+        const majorZoneKeywords = ['Habitation', 'Command', 'Bridge', 'Engineering', 'Cargo', 'Docking', 'Ops', 'Industrial', 'Ring', 'Deck', 'Blocks', 'Center', 'Core', 'Bay(s)', 'Complex', 'Hangar', 'Pool', 'Zone', 'Lab Complex'];
+        const scienceKeywords = ['Science', 'Lab', 'Specimen', 'Archive', 'Sensor', 'Quarantine', 'Data', 'Library', 'Hydroponics Lab', 'Station', 'Signal Source'];
+        const militaryKeywords = ['Military', 'Ready Room', 'Firing Range', 'Armory', 'Defenses'];
         const damagedKeywords = ['Damaged', 'Breached', 'Offline', 'Flooded', 'Compromised', 'Flickering', 'Nest', 'Wreckage', 'Collapsed', 'Malfunctioning'];
+        const medicalKeywords = ['Medical', 'Medbay', 'Infirmary', 'Quarantine'];
 
 
         // --- Global Stores ---
@@ -210,7 +267,12 @@
         let currentSvgElement = null;
 
         // --- Drag State Variables ---
-        let draggedElement = null; let draggedNodeId = null; let initialMouseX = 0; let initialMouseY = 0; let initialElementX = 0; let initialElementY = 0;
+        let draggedElement = null;
+        let draggedNodeId = null;
+        let initialMouseX = 0;
+        let initialMouseY = 0;
+        let initialElementX = 0;
+        let initialElementY = 0;
 
         // --- Event Listener ---
         if (generateButton) {
@@ -218,116 +280,422 @@
         }
 
         // --- Helper: Select Random Elements ---
-        function selectRandomElements(arr, count) { /* ... (as before) ... */ }
-        // --- Helper: Select Random Elements (Copied for Completeness) ---
-        function selectRandomElements(arr, count) { if (!arr || arr.length === 0) return []; if (count <= 0) return []; if (count >= arr.length) { let fullShuffled = [...arr]; for (let i = fullShuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [fullShuffled[i], fullShuffled[j]] = [fullShuffled[j], fullShuffled[i]]; } return fullShuffled; } let shuffled = [...arr]; for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; } return shuffled.slice(0, count); }
-
+        function selectRandomElements(arr, count) {
+            if (!arr || arr.length === 0) return [];
+            if (count <= 0) return [];
+            if (count >= arr.length) {
+                let fullShuffled = [...arr];
+                for (let i = fullShuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [fullShuffled[i], fullShuffled[j]] = [fullShuffled[j], fullShuffled[i]];
+                }
+                return fullShuffled;
+            }
+            let shuffled = [...arr];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled.slice(0, count);
+        }
 
         // --- Graph Generation Logic ---
-        function generateFacilityGraph(type, size) { /* ... (as before) ... */ }
-        // --- Graph Generation Logic (Copied for Completeness) ---
-        function generateFacilityGraph(type, size) { console.log(`Generating graph for ${size} ${type}`); const nodes = []; const edges = []; const selectedNodeNames = new Set(); let nodeIdCounter = 0; const typeData = facilityData[type]; if (!typeData) { console.error(`No data for type: ${type}`); return { nodes, edges }; } const baseZonePool = typeData.core || []; const optionalZonePool = typeData.optional || []; let numCore, numOptional; switch (size) { case 'Small': numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 2); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 2) + 0); break; case 'Large': numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 4); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 2); break; case 'Medium': default: numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 3); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 1); break; } let potentialNodes = selectRandomElements(baseZonePool, numCore); potentialNodes = potentialNodes.concat(selectRandomElements(optionalZonePool, numOptional)); const ensureTypePresent = (keywords, defaultNode) => { if (!potentialNodes.some(n => n && keywords.some(k => n.name.includes(k)))) { const foundNode = baseZonePool.find(n => n && keywords.some(k => n.name.includes(k))) || optionalZonePool.find(n => n && keywords.some(k => n.name.includes(k))) || defaultNode; if(foundNode && !selectedNodeNames.has(foundNode.name)) { console.log(`Ensuring presence of type: ${defaultNode.type}`); potentialNodes.push(foundNode); } } }; if (type !== 'DerelictShip') { ensureTypePresent(commandKeywords, {name: 'Default Command', type: 'Command'}); ensureTypePresent(habitationKeywords, {name: 'Default Hab', type: 'Habitation'}); ensureTypePresent(technicalKeywords, {name: 'Default Engineering', type: 'Technical'}); } potentialNodes.forEach(nodeData => { if (nodeData && nodeData.name && !selectedNodeNames.has(nodeData.name)) { nodes.push({ id: `node_${nodeIdCounter++}`, name: nodeData.name, type: nodeData.type || 'Unknown', isMajor: majorZoneKeywords.some(k => nodeData.name.includes(k)) }); selectedNodeNames.add(nodeData.name); } }); const edgeExists = (n1Id, n2Id) => edges.some(e => (e.source === n1Id && e.target === n2Id) || (e.source === n2Id && e.target === n1Id)); const addEdge = (n1, n2, type) => { if (n1 && n2 && n1.id && n2.id && n1.id !== n2.id && !edgeExists(n1.id, n2.id)) { edges.push({ source: n1.id, target: n2.id, type: type }); } }; if (type === 'DerelictShip') { console.log("Applying Derelict edge logic..."); const connectionProb = 0.4; for (let i = 0; i < nodes.length; i++) { for (let j = i + 1; j < nodes.length; j++) { if (Math.random() < connectionProb) { const node1OrigType = nodes[i].type === 'Damaged' ? 'Unknown' : nodes[i].type; const node2OrigType = nodes[j].type === 'Damaged' ? 'Unknown' : nodes[j].type; let edgeType = 'corridor'; if (technicalKeywords.includes(node1OrigType) && technicalKeywords.includes(node2OrigType) && Math.random() < 0.5) { edgeType = 'vent'; } addEdge(nodes[i], nodes[j], edgeType); } } } } else { const commandNode = nodes.find(n => n.type === 'Command'); const habNodes = nodes.filter(n => n.type === 'Habitation'); const techNodes = nodes.filter(n => n.type === 'Technical'); const accessNodes = nodes.filter(n => n.type === 'Access'); const amenityNodes = nodes.filter(n => n.type === 'Amenity'); const medbayNode = nodes.find(n => n.type === 'Medical'); const securityNodes = nodes.filter(n => n.type === 'Security'); const cargoNodes = nodes.filter(n => n.type === 'Cargo' || n.type === 'Industrial'); const scienceNodes = nodes.filter(n => n.type === 'Science'); if (commandNode) { securityNodes.forEach(sec => addEdge(commandNode, sec, 'corridor')); if (habNodes.length > 0) addEdge(commandNode, habNodes[0], 'corridor'); if (accessNodes.length > 0) addEdge(commandNode, accessNodes[0], 'corridor'); if (scienceNodes.length > 0) addEdge(commandNode, scienceNodes[0], 'corridor'); } habNodes.forEach(hab => { amenityNodes.forEach(amn => addEdge(hab, amn, 'corridor')); if (medbayNode) addEdge(hab, medbayNode, 'corridor'); }); for(let i = 0; i < habNodes.length - 1; i++) { addEdge(habNodes[i], habNodes[i+1], 'corridor'); } techNodes.forEach(tech1 => { techNodes.forEach(tech2 => { if(tech1.id < tech2.id) addEdge(tech1, tech2, 'vent'); }); accessNodes.forEach(acc => addEdge(tech1, acc, 'corridor')); cargoNodes.forEach(cargo => addEdge(tech1, cargo, 'corridor')); scienceNodes.forEach(sci => addEdge(tech1, sci, 'vent')); }); if(medbayNode && techNodes.length > 0) addEdge(medbayNode, techNodes[0], 'vent'); scienceNodes.forEach(sci1 => { scienceNodes.forEach(sci2 => { if(sci1.id < sci2.id && Math.random() < 0.5) addEdge(sci1, sci2, 'corridor'); }); if(medbayNode) addEdge(sci1, medbayNode, 'corridor'); }); securityNodes.forEach(sec => { accessNodes.forEach(acc => addEdge(sec, acc, 'corridor')); const brig = nodes.find(n => n.name === 'Brig' || n.name === 'Holding Cells'); if (brig) addEdge(sec, brig, 'corridor'); techNodes.forEach(tech => addEdge(sec, tech, 'vent')); }); cargoNodes.forEach(cargo => { accessNodes.forEach(acc => addEdge(cargo, acc, 'corridor')); }); checkAndEnsureConnectivity(nodes, edges, addEdge); } console.log("Generated graph:", { nodes, edges }); return { nodes, edges }; }
+        function generateFacilityGraph(type, size) {
+            console.log(`Generating graph for ${size} ${type}`);
+            const nodes = [];
+            const edges = [];
+            const selectedNodeNames = new Set();
+            let nodeIdCounter = 0;
 
+            const typeData = facilityData[type];
+            if (!typeData) {
+                console.error(`No data for type: ${type}`);
+                return { nodes, edges };
+            }
 
-        /** Checks graph connectivity using BFS and adds edges if needed */
-        function checkAndEnsureConnectivity(nodes, edges, addEdgeFunc) { /* ... (as before) ... */ }
-        // --- Connectivity Check (Copied for Completeness) ---
-         function checkAndEnsureConnectivity(nodes, edges, addEdgeFunc) { if (nodes.length <= 1) return; const adjacencyList = new Map(); nodes.forEach(n => {if(n && n.id) adjacencyList.set(n.id, []);}); edges.forEach(e => { if(e && e.source && e.target) { if (adjacencyList.has(e.source)) adjacencyList.get(e.source).push(e.target); if (adjacencyList.has(e.target)) adjacencyList.get(e.target).push(e.source); }}); const visited = new Set(); const queue = []; const startNode = nodes[0]; if (!startNode || !startNode.id) return; queue.push(startNode.id); visited.add(startNode.id); while (queue.length > 0) { const currentNodeId = queue.shift(); const neighbors = adjacencyList.get(currentNodeId) || []; neighbors.forEach(neighborId => { if (adjacencyList.has(neighborId) && !visited.has(neighborId)) { visited.add(neighborId); queue.push(neighborId); } }); } if (visited.size < nodes.length) { console.warn("Graph is disconnected. Adding edges..."); const mainComponentNode = startNode; nodes.forEach(node => { if (node && node.id && !visited.has(node.id)) { console.log(`Connecting disconnected node ${node.name} to ${mainComponentNode.name}`); addEdgeFunc(node, mainComponentNode, 'corridor'); } }); } else { console.log("Graph connectivity check passed."); } }
+            const baseZonePool = typeData.core || [];
+            const optionalZonePool = typeData.optional || [];
 
+            let numCore, numOptional;
+            switch (size) {
+                case 'Small': numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 2); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 2) + 0); break;
+                case 'Large': numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 4); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 2); break;
+                case 'Medium': default: numCore = Math.min(baseZonePool.length, Math.floor(Math.random() * 2) + 3); numOptional = Math.min(optionalZonePool.length, Math.floor(Math.random() * 3) + 1); break;
+            }
+
+            let potentialNodes = selectRandomElements(baseZonePool, numCore);
+            potentialNodes = potentialNodes.concat(selectRandomElements(optionalZonePool, numOptional));
+
+            const ensureTypePresent = (keywords, defaultNode) => {
+                if (!potentialNodes.some(n => n && keywords.some(k => n.name.toLowerCase().includes(k.toLowerCase())))) {
+                    const foundNode = baseZonePool.find(n => n && keywords.some(k => n.name.toLowerCase().includes(k.toLowerCase()))) ||
+                                      optionalZonePool.find(n => n && keywords.some(k => n.name.toLowerCase().includes(k.toLowerCase()))) ||
+                                      defaultNode;
+                    if(foundNode && !selectedNodeNames.has(foundNode.name)) {
+                        console.log(`Ensuring presence of type matching keywords: ${keywords[0]} (using ${foundNode.name})`);
+                        potentialNodes.push(foundNode);
+                    }
+                }
+            };
+
+            if (type !== 'DerelictShip') {
+                 ensureTypePresent(commandKeywords, {name: 'Default Command', type: 'Command'});
+                 ensureTypePresent(habitationKeywords, {name: 'Default Hab', type: 'Habitation'});
+                 ensureTypePresent(technicalKeywords, {name: 'Default Engineering', type: 'Technical'});
+                 ensureTypePresent(accessKeywords, {name: 'Default Access', type: 'Access'});
+                 ensureTypePresent(medicalKeywords, {name: 'Default Medbay', type: 'Medical'});
+            }
+
+            potentialNodes.forEach(nodeData => {
+                if (nodeData && nodeData.name && !selectedNodeNames.has(nodeData.name)) {
+                    const isMajor = majorZoneKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()));
+                    let determinedType = nodeData.type || 'Unknown';
+                    if (determinedType === 'Unknown' || determinedType === 'Cargo') {
+                         if (commandKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Command';
+                         else if (medicalKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Medical';
+                         else if (technicalKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Technical';
+                         else if (habitationKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Habitation';
+                         else if (securityKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Security';
+                         else if (accessKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Access';
+                         else if (amenityKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Amenity';
+                         else if (cargoKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Cargo';
+                         else if (scienceKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Science';
+                         else if (militaryKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Military';
+                         else if (damagedKeywords.some(k => nodeData.name.toLowerCase().includes(k.toLowerCase()))) determinedType = 'Damaged';
+                    }
+                    if (nodeData.name.toLowerCase().includes('industrial') || nodeData.name.toLowerCase().includes('mining')) {
+                        determinedType = 'Industrial';
+                    }
+
+                    nodes.push({
+                        id: `node_${nodeIdCounter++}`, name: nodeData.name, type: determinedType, isMajor: isMajor
+                    });
+                    selectedNodeNames.add(nodeData.name);
+                }
+            });
+
+            const edgeExists = (n1Id, n2Id) => edges.some(e => (e.source === n1Id && e.target === n2Id) || (e.source === n2Id && e.target === n1Id));
+            const addEdge = (n1, n2, type) => {
+                if (n1 && n2 && n1.id && n2.id && n1.id !== n2.id && !edgeExists(n1.id, n2.id)) {
+                    edges.push({ source: n1.id, target: n2.id, type: type });
+                }
+            };
+
+            if (nodes.length > 1) {
+                if (type === 'DerelictShip') {
+                    console.log("Applying Derelict edge logic...");
+                    const connectionProb = 0.35; const damagedProbBonus = 0.2;
+                    for (let i = 0; i < nodes.length; i++) {
+                        for (let j = i + 1; j < nodes.length; j++) {
+                            let currentProb = connectionProb;
+                            if (nodes[i].type === 'Damaged' && nodes[j].type === 'Damaged') currentProb += damagedProbBonus;
+                            if (Math.random() < currentProb) {
+                                let edgeType = (Math.random() < 0.3) ? 'vent' : 'corridor';
+                                addEdge(nodes[i], nodes[j], edgeType);
+                            }
+                        }
+                    }
+                } else {
+                    console.log("Applying standard facility edge logic...");
+                    const commandNode = nodes.find(n => n.type === 'Command');
+                    const habNodes = nodes.filter(n => n.type === 'Habitation');
+                    const techNodes = nodes.filter(n => n.type === 'Technical');
+                    const accessNodes = nodes.filter(n => n.type === 'Access');
+                    const amenityNodes = nodes.filter(n => n.type === 'Amenity');
+                    const medbayNode = nodes.find(n => n.type === 'Medical');
+                    const securityNodes = nodes.filter(n => n.type === 'Security');
+                    const cargoNodes = nodes.filter(n => n.type === 'Cargo' || n.type === 'Industrial');
+                    const scienceNodes = nodes.filter(n => n.type === 'Science');
+                    const militaryNodes = nodes.filter(n => n.type === 'Military');
+
+                    if (commandNode) {
+                        securityNodes.forEach(sec => addEdge(commandNode, sec, 'corridor'));
+                        if (habNodes.length > 0) addEdge(commandNode, habNodes[0], 'corridor');
+                        if (accessNodes.length > 0) addEdge(commandNode, accessNodes[0], 'corridor');
+                        if (scienceNodes.length > 0) addEdge(commandNode, scienceNodes[0], 'corridor');
+                        if (militaryNodes.length > 0) addEdge(commandNode, militaryNodes[0], 'corridor');
+                    }
+                    habNodes.forEach(hab => {
+                        amenityNodes.forEach(amn => addEdge(hab, amn, 'corridor'));
+                        if (medbayNode) addEdge(hab, medbayNode, 'corridor');
+                    });
+                    for(let i = 0; i < habNodes.length - 1; i++) { addEdge(habNodes[i], habNodes[i+1], 'corridor'); }
+                    techNodes.forEach(tech1 => {
+                        techNodes.forEach(tech2 => { if(tech1.id < tech2.id) addEdge(tech1, tech2, 'vent'); });
+                        accessNodes.forEach(acc => addEdge(tech1, acc, 'corridor'));
+                        cargoNodes.forEach(cargo => addEdge(tech1, cargo, 'corridor'));
+                        scienceNodes.forEach(sci => addEdge(tech1, sci, 'vent'));
+                    });
+                    if(medbayNode && techNodes.length > 0) addEdge(medbayNode, techNodes[0], 'vent');
+                    scienceNodes.forEach(sci1 => {
+                        scienceNodes.forEach(sci2 => { if(sci1.id < sci2.id && Math.random() < 0.5) addEdge(sci1, sci2, 'corridor'); });
+                        if(medbayNode) addEdge(sci1, medbayNode, 'corridor');
+                    });
+                    securityNodes.forEach(sec => {
+                        accessNodes.forEach(acc => addEdge(sec, acc, 'corridor'));
+                        const brig = nodes.find(n => securityKeywords.some(k => n.name.toLowerCase().includes('brig') || n.name.toLowerCase().includes('holding')));
+                        if (brig && brig.id !== sec.id) addEdge(sec, brig, 'corridor');
+                        techNodes.forEach(tech => { if (Math.random() < 0.3) addEdge(sec, tech, 'vent'); });
+                    });
+                    cargoNodes.forEach(cargo => { accessNodes.forEach(acc => addEdge(cargo, acc, 'corridor')); });
+                    militaryNodes.forEach(mil => {
+                         securityNodes.forEach(sec => addEdge(mil, sec, 'corridor'));
+                         accessNodes.forEach(acc => addEdge(mil, acc, 'corridor'));
+                    });
+                }
+                checkAndEnsureConnectivity(nodes, edges, addEdge);
+            }
+            console.log("Generated graph:", { nodes, edges });
+            return { nodes, edges };
+        }
+
+        function checkAndEnsureConnectivity(nodes, edges, addEdgeFunc) {
+             if (nodes.length <= 1) return;
+             const adjacencyList = new Map();
+             nodes.forEach(n => {if(n && n.id) adjacencyList.set(n.id, []);});
+             edges.forEach(e => {
+                 if(e && e.source && e.target) {
+                     if (adjacencyList.has(e.source)) adjacencyList.get(e.source).push(e.target);
+                     if (adjacencyList.has(e.target)) adjacencyList.get(e.target).push(e.source);
+                 }
+             });
+             const visited = new Set();
+             const queue = [];
+             let startNode = nodes[0];
+             if (!startNode || !startNode.id || !adjacencyList.has(startNode.id)) {
+                 const validStartNode = nodes.find(n => n && n.id && adjacencyList.has(n.id));
+                 if (!validStartNode) { console.error("Fatal: No valid nodes for connectivity check."); return; }
+                 startNode = validStartNode;
+                 console.warn("Started connectivity check from alternative node:", startNode.name);
+             }
+             queue.push(startNode.id);
+             visited.add(startNode.id);
+             while (queue.length > 0) {
+                 const currentNodeId = queue.shift();
+                 const neighbors = adjacencyList.get(currentNodeId) || [];
+                 neighbors.forEach(neighborId => {
+                     if (adjacencyList.has(neighborId) && !visited.has(neighborId)) {
+                         visited.add(neighborId);
+                         queue.push(neighborId);
+                     }
+                 });
+             }
+             const allNodeIds = nodes.map(n => n.id).filter(id => id);
+             if (visited.size < allNodeIds.length) {
+                 console.warn(`Graph disconnected. Visited ${visited.size}/${allNodeIds.length}. Adding edges...`);
+                 const mainComponentNodeId = visited.values().next().value;
+                 const mainComponentNode = nodes.find(n => n.id === mainComponentNodeId);
+                 if (!mainComponentNode) { console.error("Could not find main component node."); return; }
+                 nodes.forEach(node => {
+                     if (node && node.id && !visited.has(node.id)) {
+                         console.log(`Connecting disconnected node ${node.name} (${node.id}) to ${mainComponentNode.name} (${mainComponentNode.id})`);
+                         let connectType = 'corridor';
+                         if (node.type === 'Technical' && mainComponentNode.type === 'Technical') connectType = 'vent';
+                         addEdgeFunc(node, mainComponentNode, connectType);
+                     }
+                 });
+             } else {
+                 console.log("Graph connectivity check passed.");
+             }
+        }
 
         // --- Main Function to Display Map ---
-        function displayGeneratedGraphMap() { /* ... (as before) ... */ }
-        // --- Main Function (Copied for Completeness) ---
-        function displayGeneratedGraphMap() { console.log("--- displayGeneratedGraphMap START ---"); if (!mapContainer) { console.error("Map container not found."); return; } try { const type = facilityTypeSelect.value; const size = facilitySizeSelect.value; const layoutAlgo = layoutAlgorithmSelect.value; currentGraph = generateFacilityGraph(type, size); if (!currentGraph || !currentGraph.nodes || currentGraph.nodes.length === 0) { console.warn("Graph generation failed."); mapContainer.innerHTML = "<p style='color:orange;padding:20px;'>Could not generate map data.</p>"; return; } mapContainer.innerHTML = ''; const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svgElement.setAttribute('id', 'connector-svg'); mapContainer.appendChild(svgElement); currentSvgElement = svgElement; nodePositions = {}; const containerWidth = mapContainer.offsetWidth; const containerHeight = mapContainer.offsetHeight; console.log(`Calculating layout using: ${layoutAlgo}`); switch (layoutAlgo) { case 'ForceDirected': layoutNodesForceDirected(currentGraph.nodes, currentGraph.edges, containerWidth, containerHeight); break; case 'Circle': layoutNodesSimpleCircle(currentGraph.nodes, containerWidth, containerHeight); break; case 'Square': layoutNodesSquare(currentGraph.nodes, containerWidth, containerHeight); break; case 'Plus': layoutNodesPlus(currentGraph.nodes, containerWidth, containerHeight); break; case 'CShape': layoutNodesCShape(currentGraph.nodes, containerWidth, containerHeight); break; case 'HShape': layoutNodesHShape(currentGraph.nodes, containerWidth, containerHeight); break; case 'LShape': layoutNodesLShape(currentGraph.nodes, containerWidth, containerHeight); break; default: console.warn(`Unknown layout: ${layoutAlgo}. Defaulting to Circle.`); layoutNodesSimpleCircle(currentGraph.nodes, containerWidth, containerHeight); break; } console.log("Node positions calculated:", nodePositions); let maxX = 0, maxY = 0; let minX = containerWidth, minY = containerHeight; Object.values(nodePositions).forEach(pos => { if(pos && typeof pos.x === 'number' && typeof pos.y === 'number'){ maxX = Math.max(maxX, pos.x); maxY = Math.max(maxY, pos.y); minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y); } }); const nodeSizeEstimate = 160; const padding = nodeSizeEstimate / 2 + 20; const svgWidth = Math.max(containerWidth, maxX + padding); const svgHeight = Math.max(containerHeight, maxY + padding); svgElement.setAttribute('width', svgWidth); svgElement.setAttribute('height', svgHeight); console.log(`SVG dimensions set to: ${svgWidth} x ${svgHeight}`); renderNodes(currentGraph.nodes, mapContainer); renderEdges(currentGraph.edges, nodePositions, svgElement, currentGraph.nodes); console.log("--- displayGeneratedGraphMap END ---"); } catch(error) { console.error("Error during displayGeneratedGraphMap:", error.message, error.stack, error); if (mapContainer) mapContainer.innerHTML = `<p style="color: red; padding: 20px;">An error occurred displaying the map: ${error.message}. Check console.</p>`; } }
-
+        function displayGeneratedGraphMap() {
+            console.log("--- displayGeneratedGraphMap START ---");
+            if (!mapContainer) { console.error("Map container not found."); return; }
+            try {
+                const type = facilityTypeSelect.value;
+                const size = facilitySizeSelect.value;
+                const layoutAlgo = layoutAlgorithmSelect.value;
+                currentGraph = generateFacilityGraph(type, size);
+                if (!currentGraph || !currentGraph.nodes || currentGraph.nodes.length === 0) {
+                    console.warn("Graph generation failed or resulted in zero nodes.");
+                    mapContainer.innerHTML = "<p style='color:orange;padding:20px;'>Could not generate map data (zero nodes generated). Try different options.</p>";
+                    const oldSvg = document.getElementById('connector-svg');
+                    if (oldSvg) oldSvg.remove();
+                    currentSvgElement = null;
+                    return;
+                }
+                mapContainer.innerHTML = '';
+                const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svgElement.setAttribute('id', 'connector-svg');
+                mapContainer.appendChild(svgElement);
+                currentSvgElement = svgElement;
+                nodePositions = {};
+                const containerWidth = mapContainer.offsetWidth;
+                const containerHeight = mapContainer.offsetHeight;
+                console.log(`Calculating layout using: ${layoutAlgo}`);
+                switch (layoutAlgo) {
+                    case 'ForceDirected': layoutNodesForceDirected(currentGraph.nodes, currentGraph.edges, containerWidth, containerHeight); break;
+                    case 'Circle': layoutNodesSimpleCircle(currentGraph.nodes, containerWidth, containerHeight); break;
+                    case 'Square': layoutNodesSquare(currentGraph.nodes, containerWidth, containerHeight); break;
+                    case 'Plus': layoutNodesPlus(currentGraph.nodes, containerWidth, containerHeight); break;
+                    case 'CShape': layoutNodesCShape(currentGraph.nodes, containerWidth, containerHeight); break;
+                    case 'HShape': layoutNodesHShape(currentGraph.nodes, containerWidth, containerHeight); break;
+                    case 'LShape': layoutNodesLShape(currentGraph.nodes, containerWidth, containerHeight); break;
+                    case 'Grid': layoutNodesGrid(currentGraph.nodes, containerWidth, containerHeight); break;
+                    default: console.warn(`Unknown layout: ${layoutAlgo}. Defaulting to ForceDirected.`); layoutNodesForceDirected(currentGraph.nodes, currentGraph.edges, containerWidth, containerHeight); break;
+                }
+                console.log("Node positions calculated:", nodePositions);
+                let maxX = 0, maxY = 0; let minX = Infinity, minY = Infinity;
+                Object.values(nodePositions).forEach(pos => {
+                    if(pos && typeof pos.x === 'number' && typeof pos.y === 'number'){
+                        maxX = Math.max(maxX, pos.x); maxY = Math.max(maxY, pos.y);
+                        minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y);
+                    }
+                });
+                 if (!isFinite(minX)) minX = 0; if (!isFinite(minY)) minY = 0;
+                const nodeWidthEstimate = 160; const nodeHeightEstimate = 65;
+                const padding = Math.max(nodeWidthEstimate / 2, nodeHeightEstimate / 2) + 20;
+                const svgWidth = Math.max(containerWidth, maxX + padding);
+                const svgHeight = Math.max(containerHeight, maxY + padding);
+                svgElement.setAttribute('width', svgWidth); svgElement.setAttribute('height', svgHeight);
+                console.log(`SVG dimensions set to: ${svgWidth} x ${svgHeight}`);
+                renderNodes(currentGraph.nodes, mapContainer);
+                renderEdges(currentGraph.edges, nodePositions, svgElement, currentGraph.nodes);
+                console.log("--- displayGeneratedGraphMap END ---");
+            } catch(error) {
+                console.error("Error during displayGeneratedGraphMap:", error.message, error.stack, error);
+                if (mapContainer) mapContainer.innerHTML = `<p style="color: red; padding: 20px;">An error occurred displaying the map: ${error.message}. Check console.</p>`;
+            }
+        }
 
         // --- Layout Functions ---
-        function layoutNodesSimpleCircle(nodes, width, height) { /* ... (as before) ... */ }
-        function layoutNodesForceDirected(nodes, edges, width, height) { /* ... (as before) ... */ }
-        function centerGraph(nodes, width, height) { /* ... (as before) ... */ }
-        function layoutNodesSquare(nodes, width, height) { /* ... (as before) ... */ }
-        function layoutNodesPlus(nodes, width, height) { /* ... (as before) ... */ }
-        function layoutNodesCShape(nodes, width, height) { /* ... (as before) ... */ }
-        function layoutNodesHShape(nodes, width, height) { /* ... (as before) ... */ }
-        function layoutNodesLShape(nodes, width, height) { /* ... (as before) ... */ }
-        // --- Layout Functions (Copied for Completeness) ---
-        function layoutNodesSimpleCircle(nodes, width, height) { console.log("Using Circle Layout"); const numNodes = nodes.length; if (numNodes === 0) return; const centerX = width / 2; const centerY = height / 2; const radius = Math.min(width, height) * 0.35; const angleStep = (2 * Math.PI) / numNodes; nodes.forEach((node, index) => { if(!node || !node.id) return; const angle = index * angleStep; const x = centerX + radius * Math.cos(angle); const y = centerY + radius * Math.sin(angle); nodePositions[node.id] = { x, y }; }); }
-        function layoutNodesForceDirected(nodes, edges, width, height) { console.log("Using Force-Directed Layout"); const iterations = 250; const repulsionStrength = 6000; const attractionStrength = 0.05; const idealEdgeLength = 120; const damping = 0.80; const overlapPadding = 10; const overlapStrength = 0.5; const nodeSizes = {}; nodes.forEach(node => { if (node && node.id) { const isMajor = majorZoneKeywords.some(k => node.name.toLowerCase().includes(k.toLowerCase())); nodeSizes[node.id] = { width: isMajor ? 160 : 100, height: isMajor ? 65 : 50 }; } }); nodePositions = {}; const margin = 50; nodes.forEach(node => { if (node && node.id) { nodePositions[node.id] = { x: Math.random() * (width - 2 * margin) + margin, y: Math.random() * (height - 2 * margin) + margin }; } }); console.log("Initialized with random positions."); let forces = {}; for (let i = 0; i < iterations; i++) { nodes.forEach(node => { if(node && node.id) forces[node.id] = { x: 0, y: 0 }; }); for (let j = 0; j < nodes.length; j++) { for (let k = j + 1; k < nodes.length; k++) { const node1 = nodes[j]; const node2 = nodes[k]; if (!node1 || !node2 || !node1.id || !node2.id) continue; const pos1 = nodePositions[node1.id]; const pos2 = nodePositions[node2.id]; if (!pos1 || !pos2) continue; const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) distance = 0.1; const repulsionForce = repulsionStrength / (distance * distance); const rfx = (dx / distance) * repulsionForce; const rfy = (dy / distance) * repulsionForce; if (forces[node1.id]) { forces[node1.id].x -= rfx; forces[node1.id].y -= rfy; } if (forces[node2.id]) { forces[node2.id].x += rfx; forces[node2.id].y += rfy; } const size1 = nodeSizes[node1.id] || { width: 100, height: 50 }; const size2 = nodeSizes[node2.id] || { width: 100, height: 50 }; const overlapX = (size1.width + size2.width) / 2 + overlapPadding - Math.abs(dx); const overlapY = (size1.height + size2.height) / 2 + overlapPadding - Math.abs(dy); if (overlapX > 0 && overlapY > 0) { const separationForce = overlapStrength * (overlapX + overlapY); const sfx = (dx / distance) * separationForce; const sfy = (dy / distance) * separationForce; if (forces[node1.id]) { forces[node1.id].x -= sfx; forces[node1.id].y -= sfy; } if (forces[node2.id]) { forces[node2.id].x += sfx; forces[node2.id].y += sfy; } } } } edges.forEach(edge => { if (!edge || !edge.source || !edge.target) return; const sourceNode = nodes.find(n => n && n.id === edge.source); const targetNode = nodes.find(n => n && n.id === edge.target); if (!sourceNode || !targetNode) return; const pos1 = nodePositions[sourceNode.id]; const pos2 = nodePositions[targetNode.id]; if (!pos1 || !pos2) return; const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) return; const force = attractionStrength * (distance - idealEdgeLength); const fx = (dx / distance) * force; const fy = (dy / distance) * force; if (forces[sourceNode.id]) { forces[sourceNode.id].x += fx; forces[sourceNode.id].y += fy; } if (forces[targetNode.id]) { forces[targetNode.id].x -= fx; forces[targetNode.id].y -= fy; } }); nodes.forEach(node => { if (!node || !node.id) return; const pos = nodePositions[node.id]; const force = forces[node.id]; if (!pos || !force) return; pos.x += force.x * damping; pos.y += force.y * damping; const nodeSize = nodeSizes[node.id] || { width: 100, height: 50 }; pos.x = Math.max(nodeSize.width / 2 + 5, Math.min(width - nodeSize.width / 2 - 5, pos.x)); pos.y = Math.max(nodeSize.height / 2 + 5, Math.min(height - nodeSize.height / 2 - 5, pos.y)); }); } centerGraph(nodes, width, height); console.log("Force-Directed layout calculation finished."); }
-        function centerGraph(nodes, width, height) { if (nodes.length === 0) return; let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; nodes.forEach(node => { if(!node || !node.id) return; const pos = nodePositions[node.id]; if(!pos) return; minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y); maxX = Math.max(maxX, pos.x); maxY = Math.max(maxY, pos.y); }); if (!isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY)) return; const graphWidth = maxX - minX; const graphHeight = maxY - minY; const graphCenterX = minX + graphWidth / 2; const graphCenterY = minY + graphHeight / 2; const containerCenterX = width / 2; const containerCenterY = height / 2; const shiftX = containerCenterX - graphCenterX; const shiftY = containerCenterY - graphCenterY; nodes.forEach(node => { if(node && node.id && nodePositions[node.id]){ nodePositions[node.id].x += shiftX; nodePositions[node.id].y += shiftY;} }); }
-        function layoutNodesSquare(nodes, width, height) { console.log("Using Square Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const side = Math.min(width - 2 * margin, height - 2 * margin); const halfSide = side / 2; const centerX = width / 2; const centerY = height / 2; const perimeter = side * 4; const spacing = perimeter / numNodes; let currentDist = 0; nodes.forEach((node, index) => { let x, y; if (currentDist < side) { x = centerX - halfSide + currentDist; y = centerY - halfSide; } else if (currentDist < side * 2) { x = centerX + halfSide; y = centerY - halfSide + (currentDist - side); } else if (currentDist < side * 3) { x = centerX + halfSide - (currentDist - side * 2); y = centerY + halfSide; } else { x = centerX - halfSide; y = centerY + halfSide - (currentDist - side * 3); } nodePositions[node.id] = { x, y }; currentDist += spacing; }); }
-        function layoutNodesPlus(nodes, width, height) { console.log("Using Plus Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const centerX = width / 2; const centerY = height / 2; const armLength = Math.min(width, height) * 0.35; const hasCenterNode = numNodes % 2 === 1 || numNodes === 1; let nodeIndex = 0; if (hasCenterNode) { nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY }; nodeIndex++; } const remainingNodes = nodes.length - nodeIndex; const nodesOnArm = [ Math.ceil(remainingNodes / 4), Math.floor(remainingNodes / 4), Math.ceil(remainingNodes / 4), Math.floor(remainingNodes / 4) ]; while(nodesOnArm.reduce((a,b)=>a+b,0) > remainingNodes) { nodesOnArm[nodesOnArm.findIndex(c => c > 0)]--; } while(nodesOnArm.reduce((a,b)=>a+b,0) < remainingNodes) { nodesOnArm[nodesOnArm.findIndex(c => c >= 0)]++; } let armIndex = 0; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY - dist }; } armIndex++; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX + dist, y: centerY }; } armIndex++; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY + dist }; } armIndex++; for(let i = 0; i < nodesOnArm[armIndex]; i++, nodeIndex++) { const dist = armLength * ((i + 1) / (nodesOnArm[armIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX - dist, y: centerY }; } }
-        function layoutNodesCShape(nodes, width, height) { console.log("Using C-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const side = Math.min(width - 2 * margin, height - 2 * margin); const halfSide = side / 2; const centerX = width / 2; const centerY = height / 2; const perimeter = side * 3; const spacing = numNodes > 1 ? perimeter / (numNodes -1) : perimeter; let currentDist = 0; nodes.forEach((node, index) => { let x, y; if (currentDist <= side) { x = centerX - halfSide + currentDist; y = centerY - halfSide; } else if (currentDist <= side * 2) { x = centerX - halfSide; y = centerY - halfSide + (currentDist - side); } else { x = centerX - halfSide + (currentDist - side * 2); y = centerY + halfSide; } const nodeSizeEstimate = 100; x = Math.max(nodeSizeEstimate / 2 + 5, Math.min(width - nodeSizeEstimate / 2 - 5, x)); y = Math.max(nodeSizeEstimate / 2 + 5, Math.min(height - nodeSizeEstimate / 2 - 5, y)); nodePositions[node.id] = { x, y }; currentDist += spacing; }); }
-        function layoutNodesHShape(nodes, width, height) { console.log("Using H-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const shapeHeight = height - 2 * margin; const shapeWidth = Math.min(width - 2 * margin, shapeHeight * 0.8); const halfWidth = shapeWidth / 2; const halfHeight = shapeHeight / 2; const centerX = width / 2; const centerY = height / 2; const nPerVertical = Math.floor(numNodes / 3); const nHorizontal = numNodes - 2 * nPerVertical; let nodeIndex = 0; for (let i = 0; i < nPerVertical; i++, nodeIndex++) { const y = centerY - halfHeight + (shapeHeight * (i + 0.5) / nPerVertical); nodePositions[nodes[nodeIndex].id] = { x: centerX - halfWidth, y: y }; } for (let i = 0; i < nPerVertical; i++, nodeIndex++) { const y = centerY - halfHeight + (shapeHeight * (i + 0.5) / nPerVertical); nodePositions[nodes[nodeIndex].id] = { x: centerX + halfWidth, y: y }; } const startOffset = (nHorizontal > 0 && nPerVertical > 0) ? 1 : 0; const endOffset = startOffset; const placeableWidth = shapeWidth * 2; for (let i = 0; i < nHorizontal; i++, nodeIndex++) { const x = centerX - halfWidth + (placeableWidth * (i + startOffset + 0.5) / (nHorizontal + startOffset + endOffset)); nodePositions[nodes[nodeIndex].id] = { x: x, y: centerY }; } }
-        function layoutNodesLShape(nodes, width, height) { console.log("Using L-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const shapeSize = Math.min(width - 2 * margin, height - 2 * margin); const halfSize = shapeSize / 2; const centerX = width / 2; const centerY = height / 2; const cornerX = centerX - halfSize; const cornerY = centerY - halfSize; const nHorizontal = Math.ceil(numNodes / 2); const nVertical = numNodes - nHorizontal; let nodeIndex = 0; for (let i = 0; i < nHorizontal; i++, nodeIndex++) { const x = cornerX + (shapeSize * (i + 0.5) / nHorizontal); nodePositions[nodes[nodeIndex].id] = { x: x, y: cornerY }; } for (let i = 0; i < nVertical; i++, nodeIndex++) { const y = cornerY + (shapeSize * (i + 1.5) / (nVertical + 1)); nodePositions[nodes[nodeIndex].id] = { x: cornerX, y: y }; } }
+        function layoutNodesSimpleCircle(nodes, width, height) { /* ... as before ... */ console.log("Using Circle Layout"); const numNodes = nodes.length; if (numNodes === 0) return; const centerX = width / 2; const centerY = height / 2; const radius = Math.max(50, Math.min(width, height) * 0.35); const angleStep = (2 * Math.PI) / numNodes; nodes.forEach((node, index) => { if(!node || !node.id) return; const angle = index * angleStep; const x = centerX + radius * Math.cos(angle); const y = centerY + radius * Math.sin(angle); nodePositions[node.id] = { x, y }; }); }
+        function layoutNodesForceDirected(nodes, edges, width, height) { /* ... as before ... */ console.log("Using Force-Directed Layout"); if (nodes.length === 0) return; const iterations = 250; const repulsionStrength = 8000; const attractionStrength = 0.04; const idealEdgeLength = 150; const damping = 0.80; const overlapPadding = 15; const overlapStrength = 0.7; const nodeSizes = {}; nodes.forEach(node => { if (node && node.id) { nodeSizes[node.id] = { width: node.isMajor ? 160 : 100, height: node.isMajor ? 65 : 50 }; } }); nodePositions = {}; const margin = 50; nodes.forEach(node => { if (node && node.id) { nodePositions[node.id] = { x: Math.random() * (width - 2 * margin) + margin, y: Math.random() * (height - 2 * margin) + margin, vx: 0, vy: 0 }; } }); console.log("Initialized with random positions."); for (let i = 0; i < iterations; i++) { let forces = {}; nodes.forEach(node => { if(node && node.id) forces[node.id] = { x: 0, y: 0 }; }); for (let j = 0; j < nodes.length; j++) { for (let k = j + 1; k < nodes.length; k++) { const node1 = nodes[j]; const node2 = nodes[k]; if (!node1 || !node2 || !node1.id || !node2.id) continue; const pos1 = nodePositions[node1.id]; const pos2 = nodePositions[node2.id]; if (!pos1 || !pos2) continue; const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; let distanceSq = dx * dx + dy * dy; if (distanceSq === 0) { distanceSq = 0.1; pos1.x += (Math.random() - 0.5) * 0.1; pos1.y += (Math.random() - 0.5) * 0.1; } const distance = Math.sqrt(distanceSq); const repulsionForce = repulsionStrength / distanceSq; const rfx = (dx / distance) * repulsionForce; const rfy = (dy / distance) * repulsionForce; if (forces[node1.id]) { forces[node1.id].x -= rfx; forces[node1.id].y -= rfy; } if (forces[node2.id]) { forces[node2.id].x += rfx; forces[node2.id].y += rfy; } const size1 = nodeSizes[node1.id] || { width: 100, height: 50 }; const size2 = nodeSizes[node2.id] || { width: 100, height: 50 }; const requiredDistX = (size1.width + size2.width) / 2 + overlapPadding; const requiredDistY = (size1.height + size2.height) / 2 + overlapPadding; const overlapX = requiredDistX - Math.abs(dx); const overlapY = requiredDistY - Math.abs(dy); if (overlapX > 0 && overlapY > 0) { const separationForce = overlapStrength; const sfx = (dx > 0 ? 1 : -1) * separationForce * (overlapX / requiredDistX); const sfy = (dy > 0 ? 1 : -1) * separationForce * (overlapY / requiredDistY); if (forces[node1.id]) { forces[node1.id].x -= sfx; forces[node1.id].y -= sfy; } if (forces[node2.id]) { forces[node2.id].x += sfx; forces[node2.id].y += sfy; } } } } edges.forEach(edge => { if (!edge || !edge.source || !edge.target) return; const sourceNode = nodes.find(n => n && n.id === edge.source); const targetNode = nodes.find(n => n && n.id === edge.target); if (!sourceNode || !targetNode) return; const pos1 = nodePositions[sourceNode.id]; const pos2 = nodePositions[targetNode.id]; if (!pos1 || !pos2) return; const dx = pos2.x - pos1.x; const dy = pos2.y - pos1.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) return; const force = attractionStrength * (distance - idealEdgeLength); const fx = (dx / distance) * force; const fy = (dy / distance) * force; if (forces[sourceNode.id]) { forces[sourceNode.id].x += fx; forces[sourceNode.id].y += fy; } if (forces[targetNode.id]) { forces[targetNode.id].x -= fx; forces[targetNode.id].y -= fy; } }); nodes.forEach(node => { if (!node || !node.id) return; const pos = nodePositions[node.id]; const force = forces[node.id]; if (!pos || !force) return; pos.vx = (pos.vx + force.x) * damping; pos.vy = (pos.vy + force.y) * damping; pos.x += pos.vx; pos.y += pos.vy; const nodeSize = nodeSizes[node.id] || { width: 100, height: 50 }; const halfWidth = nodeSize.width / 2; const halfHeight = nodeSize.height / 2; pos.x = Math.max(halfWidth + 5, Math.min(width - halfWidth - 5, pos.x)); pos.y = Math.max(halfHeight + 5, Math.min(height - halfHeight - 5, pos.y)); }); } centerGraph(nodes, width, height); console.log("Force-Directed layout calculation finished."); }
+        function centerGraph(nodes, width, height) { /* ... as before ... */ if (nodes.length === 0) return; let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; nodes.forEach(node => { if(!node || !node.id) return; const pos = nodePositions[node.id]; if(!pos) return; minX = Math.min(minX, pos.x); minY = Math.min(minY, pos.y); maxX = Math.max(maxX, pos.x); maxY = Math.max(maxY, pos.y); }); if (!isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY)) { console.warn("Cannot center graph: Invalid bounds."); return; } const graphWidth = maxX - minX; const graphHeight = maxY - minY; const graphCenterX = minX + graphWidth / 2; const graphCenterY = minY + graphHeight / 2; const containerCenterX = width / 2; const containerCenterY = height / 2; const shiftX = containerCenterX - graphCenterX; const shiftY = containerCenterY - graphCenterY; nodes.forEach(node => { if(node && node.id && nodePositions[node.id]){ nodePositions[node.id].x += shiftX; nodePositions[node.id].y += shiftY; const nodeSize = node.isMajor ? {width: 160, height: 65} : {width: 100, height: 50}; const halfWidth = nodeSize.width / 2; const halfHeight = nodeSize.height / 2; nodePositions[node.id].x = Math.max(halfWidth + 5, Math.min(width - halfWidth - 5, nodePositions[node.id].x)); nodePositions[node.id].y = Math.max(halfHeight + 5, Math.min(height - halfHeight - 5, nodePositions[node.id].y)); } }); console.log("Graph centered."); }
+        function layoutNodesSquare(nodes, width, height) { /* ... as before ... */ console.log("Using Square Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const side = Math.min(width - 2 * margin, height - 2 * margin); const halfSide = side / 2; const centerX = width / 2; const centerY = height / 2; const perimeter = side * 4; const spacing = numNodes > 1 ? perimeter / numNodes : 0; let currentDist = 0; nodes.forEach((node, index) => { if (!node || !node.id) return; let x, y; if (numNodes === 1) { x = centerX; y = centerY; } else if (currentDist < side) { x = centerX - halfSide + currentDist; y = centerY - halfSide; } else if (currentDist < side * 2) { x = centerX + halfSide; y = centerY - halfSide + (currentDist - side); } else if (currentDist < side * 3) { x = centerX + halfSide - (currentDist - side * 2); y = centerY + halfSide; } else { x = centerX - halfSide; y = centerY + halfSide - (currentDist - side * 3); } nodePositions[node.id] = { x, y }; currentDist += spacing; }); }
+        function layoutNodesPlus(nodes, width, height) { /* ... as before ... */ console.log("Using Plus Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const centerX = width / 2; const centerY = height / 2; const armLength = Math.min(width, height) * 0.35; const hasCenterNode = numNodes % 2 === 1 || numNodes === 1; let nodeIndex = 0; if (hasCenterNode) { if (nodes[nodeIndex]) { nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY }; nodeIndex++; } } const remainingNodes = nodes.length - nodeIndex; if (remainingNodes === 0 && hasCenterNode) return; const baseNodesPerArm = Math.floor(remainingNodes / 4); let extraNodes = remainingNodes % 4; const nodesOnArm = [ baseNodesPerArm + (extraNodes-- > 0 ? 1 : 0), baseNodesPerArm + (extraNodes-- > 0 ? 1 : 0), baseNodesPerArm + (extraNodes-- > 0 ? 1 : 0), baseNodesPerArm ]; let currentArmIndex = 0; for(let i = 0; i < nodesOnArm[currentArmIndex]; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const dist = armLength * ((i + 1) / (nodesOnArm[currentArmIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY - dist }; } currentArmIndex++; for(let i = 0; i < nodesOnArm[currentArmIndex]; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const dist = armLength * ((i + 1) / (nodesOnArm[currentArmIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX + dist, y: centerY }; } currentArmIndex++; for(let i = 0; i < nodesOnArm[currentArmIndex]; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const dist = armLength * ((i + 1) / (nodesOnArm[currentArmIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX, y: centerY + dist }; } currentArmIndex++; for(let i = 0; i < nodesOnArm[currentArmIndex]; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const dist = armLength * ((i + 1) / (nodesOnArm[currentArmIndex] + 1)); nodePositions[nodes[nodeIndex].id] = { x: centerX - dist, y: centerY }; } }
+        function layoutNodesCShape(nodes, width, height) { /* ... as before ... */ console.log("Using C-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const side = Math.min(width - 2 * margin, height - 2 * margin); const halfSide = side / 2; const centerX = width / 2; const centerY = height / 2; const perimeter = side * 3; const spacing = numNodes > 1 ? perimeter / (numNodes - 1) : 0; let currentDist = 0; nodes.forEach((node, index) => { if (!node || !node.id) return; let x, y; if (currentDist <= side) { x = centerX - halfSide + currentDist; y = centerY - halfSide; } else if (currentDist <= side * 2) { x = centerX - halfSide; y = centerY - halfSide + (currentDist - side); } else { x = centerX - halfSide + (currentDist - side * 2); y = centerY + halfSide; } const nodeSizeEstimate = 100; x = Math.max(nodeSizeEstimate / 2 + 5, Math.min(width - nodeSizeEstimate / 2 - 5, x)); y = Math.max(nodeSizeEstimate / 2 + 5, Math.min(height - nodeSizeEstimate / 2 - 5, y)); nodePositions[node.id] = { x, y }; if (index < numNodes - 1) { currentDist += spacing; } }); }
+        function layoutNodesHShape(nodes, width, height) { /* ... as before ... */ console.log("Using H-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const shapeHeight = height - 2 * margin; const shapeWidth = Math.min(width - 2 * margin, shapeHeight * 0.8); const halfWidth = shapeWidth / 2; const halfHeight = shapeHeight / 2; const centerX = width / 2; const centerY = height / 2; let nLeftVertical = Math.max(0, Math.floor(numNodes / 3)); let nRightVertical = Math.max(0, Math.floor(numNodes / 3)); let nHorizontal = Math.max(0, numNodes - nLeftVertical - nRightVertical); if (nLeftVertical + nRightVertical + nHorizontal < numNodes) { nHorizontal += (numNodes - (nLeftVertical + nRightVertical + nHorizontal)); } if (numNodes < 3) { nHorizontal = numNodes; nLeftVertical = 0; nRightVertical = 0; } else if (numNodes === 3) { nLeftVertical = 1; nRightVertical = 1; nHorizontal = 1; } let nodeIndex = 0; for (let i = 0; i < nLeftVertical; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const y = centerY - halfHeight + (shapeHeight * (i + 0.5) / nLeftVertical); nodePositions[nodes[nodeIndex].id] = { x: centerX - halfWidth, y: y }; } for (let i = 0; i < nRightVertical; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const y = centerY - halfHeight + (shapeHeight * (i + 0.5) / nRightVertical); nodePositions[nodes[nodeIndex].id] = { x: centerX + halfWidth, y: y }; } const startOffset = nLeftVertical > 0 ? 1 : 0; const endOffset = nRightVertical > 0 ? 1 : 0; const placeableWidth = shapeWidth; const horizontalSpacing = nHorizontal > 0 ? placeableWidth / (nHorizontal + startOffset + endOffset -1) : 0; for (let i = 0; i < nHorizontal; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const x = (centerX - halfWidth) + (placeableWidth * (i + startOffset) / (nHorizontal + startOffset + endOffset -1 + (nHorizontal === 1 ? 1:0))); nodePositions[nodes[nodeIndex].id] = { x: x , y: centerY }; } }
+        function layoutNodesLShape(nodes, width, height) { /* ... as before ... */ console.log("Using L-Shape Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 80; const shapeSize = Math.min(width - 2 * margin, height - 2 * margin); const cornerX = margin; const cornerY = margin; let nHorizontal = Math.ceil(numNodes / 2); let nVertical = numNodes - nHorizontal; if (numNodes === 1) { nHorizontal = 1; nVertical = 0; } let nodeIndex = 0; const horizontalSpacing = nHorizontal > 1 ? shapeSize / (nHorizontal -1) : 0; for (let i = 0; i < nHorizontal; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const x = cornerX + (i * horizontalSpacing); nodePositions[nodes[nodeIndex].id] = { x: x, y: cornerY }; } const verticalSpacing = nVertical > 0 ? shapeSize / nVertical : 0; for (let i = 0; i < nVertical; i++, nodeIndex++) { if (!nodes[nodeIndex] || !nodes[nodeIndex].id) continue; const y = cornerY + verticalSpacing * (i + 1); nodePositions[nodes[nodeIndex].id] = { x: cornerX, y: y }; } }
+        function layoutNodesGrid(nodes, width, height) { /* ... as before ... */ console.log("Using Grid Layout"); const numNodes = nodes.length; if (numNodes === 0) return; nodePositions = {}; const margin = 60; const availableWidth = width - 2 * margin; const availableHeight = height - 2 * margin; const nodeWidthEstimate = 160; const nodeHeightEstimate = 65; const hSpacing = nodeWidthEstimate * 1.3; const vSpacing = nodeHeightEstimate * 1.7; let cols = Math.max(1, Math.floor(availableWidth / hSpacing)); let rows = Math.ceil(numNodes / cols); const requiredHeight = (rows - 1) * vSpacing; if (requiredHeight > availableHeight && rows > 1) { console.log("Grid too tall, recalculating based on height"); rows = Math.max(1, Math.floor(availableHeight / vSpacing)); cols = Math.ceil(numNodes / rows); } const gridWidth = (cols - 1) * hSpacing; const gridHeight = (rows - 1) * vSpacing; const startX = margin + Math.max(0, (availableWidth - gridWidth) / 2); const startY = margin + Math.max(0, (availableHeight - gridHeight) / 2); nodes.forEach((node, index) => { if (!node || !node.id) return; const col = index % cols; const row = Math.floor(index / cols); const x = startX + col * hSpacing; const y = startY + row * vSpacing; nodePositions[node.id] = { x: x, y: y }; }); console.log(`Grid Layout: ${cols} columns, ${rows} rows`); }
 
 
         // --- Rendering Functions ---
-        function renderNodes(nodes, container) {
-            console.log("Rendering nodes...");
-            const nodeSizeData = {}; nodes.forEach(node => { if (node && node.id) { const isMajor = majorZoneKeywords.some(k => node.name.toLowerCase().includes(k.toLowerCase())); nodeSizeData[node.id] = { width: isMajor ? 160 : 100, height: isMajor ? 65 : 50 }; } });
-            nodes.forEach(node => {
-                if (!node || !node.id || !nodePositions[node.id]) { console.warn(`Position/data missing for node ${node ? node.id : 'unknown'}. Skipping render.`); return; }
-                const pos = nodePositions[node.id];
-                const zoneDiv = createZoneElement(node.name, node.type);
-                const size = nodeSizeData[node.id] || { width: 100, height: 50 };
-                zoneDiv.dataset.nodeId = node.id; // Add node ID for drag handling
-                zoneDiv.dataset.width = size.width;
-                zoneDiv.dataset.height = size.height;
-                zoneDiv.style.left = `${pos.x}px`;
-                zoneDiv.style.top = `${pos.y}px`;
-                zoneDiv.addEventListener('mousedown', handleDragStart); // Add listener
-                container.appendChild(zoneDiv);
+        function renderNodes(nodes, container) { /* ... as before ... */ console.log("Rendering nodes..."); container.querySelectorAll('.zone').forEach(el => el.remove()); const nodeSizeData = {}; nodes.forEach(node => { if (node && node.id) { nodeSizeData[node.id] = { width: node.isMajor ? 160 : 100, height: node.isMajor ? 65 : 50 }; } }); nodes.forEach(node => { if (!node || !node.id || !nodePositions[node.id]) { console.warn(`Position/data missing for node ${node ? node.id : 'unknown'}. Skipping.`); return; } const pos = nodePositions[node.id]; const zoneDiv = createZoneElement(node.name, node.type); const size = nodeSizeData[node.id] || { width: 100, height: 50 }; zoneDiv.dataset.nodeId = node.id; zoneDiv.dataset.width = size.width; zoneDiv.dataset.height = size.height; zoneDiv.style.width = `${size.width}px`; zoneDiv.style.height = `${size.height}px`; if (node.isMajor) { zoneDiv.classList.add('zone-major'); } zoneDiv.style.left = `${pos.x}px`; zoneDiv.style.top = `${pos.y}px`; zoneDiv.addEventListener('mousedown', handleDragStart); container.appendChild(zoneDiv); }); console.log("Node rendering finished."); }
+        function renderEdges(edges, positions, svg, nodes) { /* ... as before ... */ console.log("Rendering edges..."); if (svg) { svg.innerHTML = ''; } else { console.error("SVG element not found."); return; } let drawnCount = 0; const nodeSizeData = {}; nodes.forEach(node => { if (node && node.id) { nodeSizeData[node.id] = { width: node.isMajor ? 160 : 100, height: node.isMajor ? 65 : 50 }; } }); edges.forEach(edge => { if (!edge || !edge.source || !edge.target) return; const sourcePos = positions[edge.source]; const targetPos = positions[edge.target]; const sourceSize = nodeSizeData[edge.source] || { width: 100, height: 50 }; const targetSize = nodeSizeData[edge.target] || { width: 100, height: 50 }; if (!sourcePos || !targetPos) { console.warn(`Skipping edge: Pos missing for ${edge.source} or ${edge.target}`); return; } const dx = targetPos.x - sourcePos.x; const dy = targetPos.y - sourcePos.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance === 0) return; const nx = dx / distance; const ny = dy / distance; const startX = sourcePos.x + nx * (sourceSize.width / 2 + 5); const startY = sourcePos.y + ny * (sourceSize.height / 2 + 5); const endX = targetPos.x - nx * (targetSize.width / 2 + 5); const endY = targetPos.y - ny * (targetSize.height / 2 + 5); const finalDx = endX - startX; const finalDy = endY - startY; if (Math.sqrt(finalDx*finalDx + finalDy*finalDy) < 10) { return; } const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); line.setAttribute('x1', startX); line.setAttribute('y1', startY); line.setAttribute('x2', endX); line.setAttribute('y2', endY); const connectorClass = edge.type === 'vent' ? 'connector-vent' : 'connector-corridor'; line.setAttribute('class', `connector-line ${connectorClass}`); svg.appendChild(line); drawnCount++; }); console.log(`Rendered ${drawnCount} edges.`); }
+
+
+        // --- Helper: Create Zone Div (UPDATED for Dblclick Edit) ---
+        function createZoneElement(zoneName, zoneType = 'Unknown') {
+            const zoneDiv = document.createElement('div');
+            zoneDiv.classList.add('zone');
+            const typeClass = zoneType.replace(/[^a-zA-Z0-9]/g, '') || 'Unknown';
+            zoneDiv.classList.add(`zone-${typeClass}`);
+            zoneDiv.textContent = zoneName;
+
+            // --- Make editable ON DOUBLE CLICK ---
+            zoneDiv.addEventListener('dblclick', (e) => {
+                e.preventDefault(); // Prevent potential double-click text selection issues
+                if (zoneDiv.classList.contains('editing')) return; // Don't re-trigger if already editing
+
+                zoneDiv.setAttribute('contenteditable', 'true');
+                zoneDiv.classList.add('editing'); // Add editing class for styling
+                zoneDiv.focus(); // Focus the element to start editing
+
+                // Optional: Select the text inside for easier replacement
+                try {
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(zoneDiv);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } catch (err) {
+                    console.warn("Could not automatically select text on edit:", err);
+                }
             });
-            console.log("Node rendering finished.");
-        }
-        function renderEdges(edges, positions, svg, nodes) {
-            console.log("Rendering edges...");
-            let drawnCount = 0;
-            const nodeSizeData = {};
-            nodes.forEach(node => { if (node && node.id) { const isMajor = majorZoneKeywords.some(k => node.name.toLowerCase().includes(k.toLowerCase())); nodeSizeData[node.id] = { width: isMajor ? 160 : 100, height: isMajor ? 65 : 50 }; } });
-            edges.forEach(edge => {
-                if (!edge || !edge.source || !edge.target) return;
-                const sourcePos = positions[edge.source]; const targetPos = positions[edge.target];
-                const sourceSize = nodeSizeData[edge.source] || { width: 100, height: 50 };
-                const targetSize = nodeSizeData[edge.target] || { width: 100, height: 50 };
-                if (!sourcePos || !targetPos) { console.warn(`Skipping edge: Position missing for ${edge.source} or ${edge.target}`); return; }
-                const dx = targetPos.x - sourcePos.x; const dy = targetPos.y - sourcePos.y; const distance = Math.sqrt(dx * dx + dy * dy);
-                const fixedOffset = 30; // Simple fixed offset
-                if (distance < fixedOffset * 1.5) { return; } // Avoid drawing if too close
-                const nx = distance === 0 ? 0 : dx / distance; const ny = distance === 0 ? 0 : dy / distance;
-                const startX = sourcePos.x + nx * fixedOffset; const startY = sourcePos.y + ny * fixedOffset;
-                const endX = targetPos.x - nx * fixedOffset; const endY = targetPos.y - ny * fixedOffset;
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', startX); line.setAttribute('y1', startY);
-                line.setAttribute('x2', endX); line.setAttribute('y2', endY);
-                const connectorClass = edge.type === 'vent' ? 'connector-vent' : 'connector-corridor';
-                line.setAttribute('class', `connector-line ${connectorClass}`);
-                svg.appendChild(line); drawnCount++;
+
+            // --- Handle finishing edit (on blur) ---
+            zoneDiv.addEventListener('blur', () => {
+                // Only perform blur actions if it was actually in editing mode
+                if (zoneDiv.classList.contains('editing')) {
+                    zoneDiv.setAttribute('contenteditable', 'false'); // Disable editing
+                    zoneDiv.classList.remove('editing'); // Remove editing class
+                    zoneDiv.style.cursor = 'grab'; // Reset cursor
+
+                    // Update node data from the edited text
+                    const nodeId = zoneDiv.dataset.nodeId;
+                    if (nodeId && currentGraph && currentGraph.nodes) {
+                        const node = currentGraph.nodes.find(n => n.id === nodeId);
+                        const newName = zoneDiv.textContent.trim();
+                        if (node && node.name !== newName) {
+                            console.log(`Updating node ${nodeId} name from "${node.name}" to "${newName}"`);
+                            node.name = newName; // Update the graph data
+                        }
+                         // If name is empty after edit, maybe revert to original? Or delete node? For now, allow empty.
+                         if (newName === '') {
+                              console.warn(`Node ${nodeId} name set to empty.`);
+                         }
+                    }
+                }
             });
-            console.log(`Rendered ${drawnCount} edges.`);
+
+             // Prevent dragging text *within* the zone IF it's currently editable
+             zoneDiv.addEventListener('mousedown', (e) => {
+                 if (zoneDiv.classList.contains('editing')) {
+                     e.stopPropagation();
+                 }
+             });
+
+            return zoneDiv;
         }
 
 
-        // --- Helper: Create Zone Div ---
-        function createZoneElement(zoneName, zoneType = '') {
-            const zoneDiv = document.createElement('div'); zoneDiv.classList.add('zone'); if (zoneType) { zoneDiv.classList.add(`zone-${zoneType}`); } zoneDiv.textContent = zoneName; return zoneDiv;
+        // --- Drag and Drop Handlers (UPDATED Drag Start Check) ---
+        function handleDragStart(event) {
+             if (event.button !== 0) return; // Only allow left-click drags
+
+             // Prevent drag if the target element is currently being edited (has the 'editing' class)
+             const targetElement = event.target.closest('.zone'); // Find the zone element itself
+             if (targetElement && targetElement.classList.contains('editing')) {
+                 console.log("Drag prevented: Element is in editing mode.");
+                 return; // Don't start drag if editing class is present
+             }
+
+             // --- Original code continues below ---
+             draggedElement = targetElement; // Use the found targetElement
+             if (!draggedElement || !draggedElement.dataset.nodeId) return; // Ensure it's a valid zone with an ID
+
+             event.preventDefault(); // Prevent default text selection behavior during drag
+
+             draggedNodeId = draggedElement.dataset.nodeId;
+             console.log(`Drag Start: ${draggedNodeId}`);
+
+             initialMouseX = event.clientX;
+             initialMouseY = event.clientY;
+             const currentPos = nodePositions[draggedNodeId];
+             if(!currentPos) {
+                 console.error("Cannot start drag: Node position not found for", draggedNodeId);
+                 draggedElement = null; return;
+             }
+             initialElementX = currentPos.x;
+             initialElementY = currentPos.y;
+
+             draggedElement.classList.add('dragging');
+             document.addEventListener('mousemove', handleDragMove);
+             document.addEventListener('mouseup', handleDragEnd);
+             document.addEventListener('mouseleave', handleDragEnd);
         }
 
-        // --- Drag and Drop Handlers ---
-        function handleDragStart(event) { if (event.button !== 0) return; draggedElement = event.target.closest('.zone'); if (!draggedElement || !draggedElement.dataset.nodeId) return; event.preventDefault(); draggedNodeId = draggedElement.dataset.nodeId; console.log(`Drag Start: ${draggedNodeId}`); initialMouseX = event.clientX; initialMouseY = event.clientY; const currentPos = nodePositions[draggedNodeId]; if(!currentPos) return; initialElementX = currentPos.x; initialElementY = currentPos.y; draggedElement.classList.add('dragging'); document.addEventListener('mousemove', handleDragMove); document.addEventListener('mouseup', handleDragEnd); }
-        function handleDragMove(event) { if (!draggedElement || !draggedNodeId) return; const deltaX = event.clientX - initialMouseX; const deltaY = event.clientY - initialMouseY; const newX = initialElementX + deltaX; const newY = initialElementY + deltaY; if(nodePositions[draggedNodeId]) { nodePositions[draggedNodeId].x = newX; nodePositions[draggedNodeId].y = newY; } draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`; const svgElement = document.getElementById('connector-svg'); if (svgElement && currentGraph.edges) { svgElement.innerHTML = ''; renderEdges(currentGraph.edges, nodePositions, svgElement, currentGraph.nodes); } }
-        function handleDragEnd(event) { if (!draggedElement) return; console.log(`Drag End: ${draggedNodeId}`); draggedElement.classList.remove('dragging'); draggedElement = null; draggedNodeId = null; document.removeEventListener('mousemove', handleDragMove); document.removeEventListener('mouseup', handleDragEnd); }
+        function handleDragMove(event) { /* ... as before ... */ if (!draggedElement || !draggedNodeId) return; event.preventDefault(); const deltaX = event.clientX - initialMouseX; const deltaY = event.clientY - initialMouseY; const newX = initialElementX + deltaX; const newY = initialElementY + deltaY; if(nodePositions[draggedNodeId]) { nodePositions[draggedNodeId].x = newX; nodePositions[draggedNodeId].y = newY; } draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`; const svgElement = document.getElementById('connector-svg'); if (svgElement && currentGraph.edges && currentGraph.nodes) { renderEdges(currentGraph.edges, nodePositions, svgElement, currentGraph.nodes); } }
+        function handleDragEnd(event) { /* ... as before ... */ if (!draggedElement) return; if (event.type !== 'mouseleave' && event.button !== 0) return; console.log(`Drag End: ${draggedNodeId}`); draggedElement.classList.remove('dragging'); const finalPos = nodePositions[draggedNodeId]; const containerWidth = mapContainer.offsetWidth; const containerHeight = mapContainer.offsetHeight; const nodeSize = { width: parseInt(draggedElement.dataset.width || '100', 10), height: parseInt(draggedElement.dataset.height || '50', 10) }; const halfWidth = nodeSize.width / 2; const halfHeight = nodeSize.height / 2; if (finalPos) { finalPos.x = Math.max(halfWidth + 5, Math.min(containerWidth - halfWidth - 5, finalPos.x)); finalPos.y = Math.max(halfHeight + 5, Math.min(containerHeight - halfHeight - 5, finalPos.y)); draggedElement.style.left = `${finalPos.x}px`; draggedElement.style.top = `${finalPos.y}px`; const svgElement = document.getElementById('connector-svg'); if (svgElement && currentGraph.edges && currentGraph.nodes) { renderEdges(currentGraph.edges, nodePositions, svgElement, currentGraph.nodes); } } draggedElement = null; draggedNodeId = null; document.removeEventListener('mousemove', handleDragMove); document.removeEventListener('mouseup', handleDragEnd); document.removeEventListener('mouseleave', handleDragEnd); }
 
         // --- Initial Display on Load ---
         window.onload = () => {
             console.log("Window loaded. Attempting initial map generation...");
             try {
-                if (generateButton && typeof displayGeneratedGraphMap === 'function') {
+                if (generateButton && typeof displayGeneratedGraphMap === 'function' && mapContainer) {
                      displayGeneratedGraphMap();
-                } else { console.warn("Generate button or display function not ready on load."); }
+                } else {
+                    console.warn("DOM elements not fully ready on load. Manual generation might be required.");
+                     if (!mapContainer && document.body) { document.body.insertAdjacentHTML('beforeend', '<p style="color:orange; padding: 20px;">Map container not found.</p>'); }
+                     else if (mapContainer){ mapContainer.innerHTML = '<p style="color:orange; padding: 20px;">Click "Generate Graph Map".</p>'; }
+                }
             } catch (error) {
                 console.error("Error during initial map generation (onload):", error);
                  if(mapContainer) { mapContainer.innerHTML = `<p style="color: red; padding: 20px;">Error on initial load: ${error.message}. Try clicking 'Generate Map'.</p>`; }
+                 else if (document.body) { document.body.insertAdjacentHTML('beforeend', `<p style="color: red; padding: 20px;">Error on initial load: ${error.message}.</p>`); }
             }
         };
 
